@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Пилот: Оракул в интенсиве</title>
+<meta name="description" content="Инструкция для тестировщиков: пройти День 1 интенсива «Свой квиз в Telegram за 3 дня» с Оракулом и прислать замечания">
+<meta property="og:title" content="Пилот: Оракул в интенсиве — День 1">
+<meta property="og:description" content="Что пройти, на что смотреть и как прислать замечания — 40–60 минут">
+<style>
+  :root { --navy: #0E1B33; --gold: #D4A23A; --gold-soft: #FBF3DF; --bg: #F6F4EF; --card: #fff; --ink: #1C1A16; --muted: #6B6A66; --line: #E7E3DA; --ok: #2E8B57; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #12151c; --card: #1a1f29; --ink: #e7e9ee; --muted: #98a2b3; --line: #2a3140; --gold-soft: #2c2616; --navy: #8fa8f0; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 22px 16px 48px; }
+  .kicker { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--gold); }
+  h1 { font-size: 26px; line-height: 1.2; margin: 6px 0 8px; }
+  .lead { color: var(--muted); margin: 0 0 18px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  .meta span { background: var(--card); border: 1px solid var(--line); border-radius: 99px; padding: 5px 12px; font-size: 14px; }
+  h2 { font-size: 19px; margin: 26px 0 10px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; margin-bottom: 10px; }
+  ol, ul { padding-left: 22px; margin: 6px 0; } li { margin: 5px 0; }
+  .task { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; border-top: 1px solid var(--line); }
+  .task:first-child { border-top: 0; padding-top: 2px; }
+  .task input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--gold); flex: 0 0 auto; }
+  .task b { display: block; }
+  .task small { color: var(--muted); }
+  .note { background: var(--gold-soft); border-radius: 12px; padding: 12px 14px; font-size: 15px; }
+  pre { white-space: pre-wrap; background: var(--card); border: 1px dashed var(--gold); border-radius: 12px; padding: 12px; font: 14px/1.5 ui-monospace, Menlo, monospace; margin: 0; }
+  button { margin-top: 10px; width: 100%; border: 0; border-radius: 12px; padding: 14px; font: 700 16px/1 inherit; background: #0E1B33; color: #fff; cursor: pointer; }
+  button.ok { background: var(--ok); }
+  .progress { font-size: 14px; color: var(--muted); margin-top: 6px; }
+  a { color: var(--gold); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="kicker">Пилот · Обучалка</div>
+  <h1>Пройдите День 1 с Оракулом</h1>
+  <p class="lead">Интенсив «Свой квиз в Telegram за 3 дня» стал игрой: Оракул ведёт по шагам голосом, за шаги — искры ✨, если не получается — подсказки и кнопка «Позвать эксперта». Помогите найти, где неясно, неудобно или сломано.</p>
+  <div class="meta"><span>⏱ 40–60 минут</span><span>💻 компьютер + 📱 телефон с Telegram</span><span>🗓 до пятницы, 6 ноября</span></div>
+
+  <h2>Как открыть</h2>
+  <div class="card"><ol>
+    <li>В Telegram откройте бота <b>@obuchalka_miniapps_bot</b> → <b>/start</b> → «Открыть».</li>
+    <li>В меню выберите <b>«Интенсив»</b> → «Начать интенсив» → <b>День 1</b>.</li>
+    <li>Удобнее всего — Telegram на компьютере (Telegram Desktop или web.telegram.org): так промпты копируются прямо в Claude.</li>
+  </ol></div>
+  <div class="note">Проходите как настоящий ученик: по-честному регистрируйтесь в Claude и делайте свою страницу. Ошибиться не страшно — это нам и нужно увидеть.</div>
+
+  <h2>Что сделать</h2>
+  <div class="card" id="tasks">
+    <label class="task"><input type="checkbox"><span><b>Прочитайте и послушайте Оракула до «Начать»</b><small>Предупреждение про доступ к Claude — понятно ли?</small></span></label>
+    <label class="task"><input type="checkbox"><span><b>Пройдите все 6 шагов Дня 1</b><small>Регистрация, тариф, режим «Чат», HTML, первая страница, две правки</small></span></label>
+    <label class="task"><input type="checkbox"><span><b>Нажмите «Послушать» хотя бы на 3 шагах</b><small>Голос: понятно ли, приятно ли, не слишком ли быстро?</small></span></label>
+    <label class="task"><input type="checkbox"><span><b>На двух любых шагах нажмите «Не получается 🙋»</b><small>Даже если всё получилось — посмотрите подсказки и «Скопировать фразу»</small></span></label>
+    <label class="task"><input type="checkbox"><span><b>Один раз нажмите «Позвать эксперта»</b><small>Эксперту придёт уведомление — это проверка, что связь работает</small></span></label>
+    <label class="task"><input type="checkbox"><span><b>Ответьте на мини-вопрос в шаге 4</b><small>Попробуйте и неверный ответ — что скажет Оракул?</small></span></label>
+    <label class="task"><input type="checkbox"><span><b>Дойдите до финала дня и отправьте задание</b><small>Искры, конфетти, итог — всё ли сработало?</small></span></label>
+    <div class="progress" id="prog">Отмечено: 0 из 7</div>
+  </div>
+
+  <h2>На что смотреть</h2>
+  <div class="card"><ul>
+    <li><b>Где вы застряли</b> или пришлось перечитывать — номер шага и что было непонятно.</li>
+    <li><b>Тексты Оракула:</b> что звучит странно, длинно, как «робот».</li>
+    <li><b>Голос:</b> темп, произношение слов (Claude, HTML, Google).</li>
+    <li><b>Игра:</b> хочется ли собирать искры? Мешает ли что-то?</li>
+    <li><b>Ошибки:</b> всё, что сломалось, — со скриншотом.</li>
+  </ul></div>
+
+  <h2>Как прислать замечания</h2>
+  <div class="card">
+    <p style="margin:0 0 10px">Скопируйте шаблон, заполните и отправьте в чат тестировщиков в Битриксе (можно голосовым + скриншоты).</p>
+    <pre id="tpl">Пилот «Оракул», День 1
+Устройство: (iPhone / Android / компьютер — Mac / Windows; Telegram Desktop / web / телефон)
+Сколько заняло: … минут
+
+1. Где застрял(а) или было непонятно (шаг и что именно):
+2. Тексты Оракула — что поправить:
+3. Голос — как вам? (темп, произношение):
+4. «Не получается» и «Позвать эксперта» — помогло?
+5. Искры и празднование — нравится? что добавить?
+6. Ошибки (со скриншотом):
+7. Оценка дня от 1 до 10 и почему:</pre>
+    <button id="copy" type="button">Скопировать шаблон</button>
+  </div>
+
+  <p class="lead" style="margin-top:22px">Спасибо! Каждое замечание сделает интенсив понятнее для экспертов, которые проходят его впервые.</p>
+</div>
+<script>
+  const boxes = [...document.querySelectorAll('#tasks input')];
+  const KEY = 'pilot-day1';
+  let saved = [];
+  try { saved = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) {}
+  boxes.forEach((b, i) => { b.checked = !!saved[i]; b.onchange = upd; });
+  function upd() {
+    const st = boxes.map(b => b.checked);
+    document.getElementById('prog').textContent = 'Отмечено: ' + st.filter(Boolean).length + ' из ' + boxes.length;
+    try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {}
+  }
+  upd();
+  document.getElementById('copy').onclick = async () => {
+    const t = document.getElementById('tpl').innerText, btn = document.getElementById('copy');
+    let ok = false;
+    try { await navigator.clipboard.writeText(t); ok = true; } catch (e) {
+      const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select();
+      try { ok = document.execCommand('copy'); } catch (_) {} ta.remove();
+    }
+    btn.textContent = ok ? 'Скопировано ✓' : 'Выделите текст и скопируйте вручную';
+    if (ok) btn.classList.add('ok');
+  };
+</script>
+</body>
+</html>
