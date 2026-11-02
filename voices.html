@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Голос Оракула — сравнение</title>
+<style>
+  :root { --navy: #0E1B33; --gold: #D4A23A; --bg: #F6F4EF; --line: #E7E3DA; --muted: #6B6A66; }
+  body { margin: 0; background: var(--bg); color: #1C1A16; font: 16px/1.5 -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+  .wrap { max-width: 520px; margin: 0 auto; padding: 20px 16px 40px; }
+  h1 { font-size: 22px; margin: 0 0 6px; }
+  p.sub { color: var(--muted); margin: 0 0 16px; font-size: 14px; }
+  .line { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; font-size: 14px; margin-bottom: 16px; }
+  .v { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; }
+  .v b { font-size: 16px; } .v span { color: var(--muted); font-size: 13px; display: block; margin: 2px 0 8px; }
+  .v.pick { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(212,162,58,.15); }
+  audio { width: 100%; }
+  .note { font-size: 13px; color: var(--muted); margin-top: 14px; }
+  a { color: var(--navy); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Голос Оракула — сравнение</h1>
+  <p class="sub">Одна реплика, пять голосов ElevenLabs. Настройки мягче: stability 0.38, speed 0.93, больше пауз в тексте.</p>
+  <div class="line">«Пора создать вашу первую страницу. Нажмите «Скопировать» под промптом… и вставьте его в чат Клода. Слова в квадратных скобках замените на свои: ваше имя, и чем вы помогаете. Нажмите Энтер — и подождите минутку. Справа появится ваша визитка.»</div>
+
+  <div class="v pick"><b>River</b><span>нейтральный, ни мужской, ни женский — сейчас в прототипе</span><audio controls preload="none" src="voices/river.mp3"></audio></div>
+  <div class="v"><b>Sarah</b><span>мягкий тёплый женский</span><audio controls preload="none" src="voices/sarah.mp3"></audio></div>
+  <div class="v"><b>Matilda</b><span>дружелюбный женский</span><audio controls preload="none" src="voices/matilda.mp3"></audio></div>
+  <div class="v"><b>George</b><span>тёплый мужской, рассказчик</span><audio controls preload="none" src="voices/george.mp3"></audio></div>
+  <div class="v"><b>Charlie</b><span>спокойный дружелюбный мужской</span><audio controls preload="none" src="voices/charlie.mp3"></audio></div>
+
+  <p class="note">Напишите, какой голос ближе к Оракулу — переозвучим весь день 1. <a href="./">← К прототипу шага 5</a></p>
+</div>
+</body>
+</html>
