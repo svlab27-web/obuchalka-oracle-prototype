@@ -107,7 +107,7 @@
 </head>
 <body>
 <div class="app">
-  <div class="demo-note">Прототип шага · голос пока браузерный, финальный — ElevenLabs</div>
+  <div class="demo-note">Прототип шага · голос Оракула — ElevenLabs</div>
 
   <div class="top">
     <div class="day">День 1 · Знакомство с Claude</div>
@@ -224,19 +224,19 @@ function say(key) {
   typing = setInterval(() => { el.textContent = L.text.slice(0, ++i); if (i >= L.text.length) clearInterval(typing); }, 14);
 }
 
-// Голос: пока браузерный (Web Speech), в продукте — mp3 из ElevenLabs
-let utter = null;
-function stopVoice() { try { speechSynthesis.cancel(); } catch (e) {} $('voice').classList.remove('playing'); $('voiceLbl').textContent = 'Послушать'; }
+// Голос Оракула — ElevenLabs, голос River (audio/<реплика>.mp3)
+let audio = null;
+function stopVoice() {
+  if (audio) { audio.pause(); audio = null; }
+  $('voice').classList.remove('playing'); $('voiceLbl').textContent = 'Послушать';
+}
 $('voice').onclick = () => {
   if ($('voice').classList.contains('playing')) return stopVoice();
-  if (!('speechSynthesis' in window)) return toast('Голос появится в финальной версии');
-  utter = new SpeechSynthesisUtterance(LINES[current].speech);
-  utter.lang = 'ru-RU'; utter.rate = 0.98;
-  const ru = speechSynthesis.getVoices().find(v => v.lang && v.lang.startsWith('ru'));
-  if (ru) utter.voice = ru;
-  utter.onend = stopVoice;
+  audio = new Audio('audio/' + current + '.mp3');
+  audio.onended = stopVoice;
+  audio.onerror = () => { stopVoice(); toast('Не удалось загрузить голос'); };
   $('voice').classList.add('playing'); $('voiceLbl').textContent = 'Стоп';
-  speechSynthesis.speak(utter);
+  audio.play().catch(() => { stopVoice(); toast('Нажмите ещё раз, чтобы включить звук'); });
 };
 
 function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 2400); }
