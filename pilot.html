@@ -38,7 +38,7 @@
 <div class="wrap">
   <div class="kicker">Пилот · Обучалка</div>
   <h1>Пройдите День 1 с Оракулом</h1>
-  <p class="lead">Интенсив «Свой квиз в Telegram за 3 дня» стал игрой: Оракул ведёт по шагам голосом, за шаги — искры ✨, если не получается — подсказки и кнопка «Позвать эксперта». Помогите найти, где неясно, неудобно или сломано.</p>
+  <p class="lead">Интенсив «Свой квиз в Telegram за 3 дня» стал игрой: Оракул ведёт по шагам голосом, за шаги — искры ✨, если не получается — подсказки прямо в шаге. Интенсив проходится самостоятельно, без эксперта — поэтому особенно важно, где вам не хватило объяснения.</p>
   <div class="meta"><span>⏱ 40–60 минут</span><span>💻 компьютер + 📱 телефон с Telegram</span><span>🗓 до пятницы, 6 ноября</span></div>
 
   <h2>Как открыть</h2>
@@ -53,9 +53,10 @@
   <div class="card" id="tasks">
     <label class="task"><input type="checkbox"><span><b>Прочитайте и послушайте Оракула до «Начать»</b><small>Предупреждение про доступ к Claude — понятно ли?</small></span></label>
     <label class="task"><input type="checkbox"><span><b>Пройдите все 7 шагов Дня 1</b><small>Рабочее место, регистрация, тариф, режим «Чат», HTML, первая страница, две правки</small></span></label>
-    <label class="task"><input type="checkbox"><span><b>Нажмите «Послушать» хотя бы на 3 шагах</b><small>Голос: понятно ли, приятно ли, не слишком ли быстро?</small></span></label>
-    <label class="task"><input type="checkbox"><span><b>На двух любых шагах нажмите «Не получается 🙋»</b><small>Даже если всё получилось — посмотрите подсказки и «Скопировать фразу»</small></span></label>
-    <label class="task"><input type="checkbox"><span><b>Один раз нажмите «Позвать эксперта»</b><small>Эксперту придёт уведомление — это проверка, что связь работает</small></span></label>
+    <label class="task"><input type="checkbox"><span><b>Нажмите «Послушать» хотя бы на 3 шагах</b><small>Голос: понятно ли, приятно ли? Попробуйте «🐢 Помедленнее»</small></span></label>
+    <label class="task"><input type="checkbox"><span><b>На трёх любых шагах нажмите «Не получается 🙋»</b><small>Даже если всё получилось — помогла бы подсказка? Чего не хватает в списке?</small></span></label>
+    <label class="task"><input type="checkbox"><span><b>Нажмите «Аа» и «📋 Скопировать текст»</b><small>Удобно ли читать? Легко ли перенести текст в Claude?</small></span></label>
+    <label class="task"><input type="checkbox"><span><b>Хотя бы раз нажмите «Отправить на компьютер»</b><small>Если читаете с телефона: пришёл ли текст в чат с ботом?</small></span></label>
     <label class="task"><input type="checkbox"><span><b>Ответьте на мини-вопрос в шаге 5 (HTML)</b><small>Попробуйте и неверный ответ — что скажет Оракул?</small></span></label>
     <label class="task"><input type="checkbox"><span><b>Дойдите до финала дня и отправьте задание</b><small>Искры, конфетти, итог — всё ли сработало?</small></span></label>
     <div class="progress" id="prog">Отмечено: 0 из 7</div>
@@ -81,7 +82,7 @@
 1. Где застрял(а) или было непонятно (шаг и что именно):
 2. Тексты Оракула — что поправить:
 3. Голос — как вам? (темп, произношение):
-4. «Не получается» и «Позвать эксперта» — помогло?
+4. «Не получается» — помогли подсказки? Какой не хватило?
 5. Искры и празднование — нравится? что добавить?
 6. Ошибки (со скриншотом):
 7. Оценка дня от 1 до 10 и почему:</pre>
@@ -92,7 +93,7 @@
 </div>
 <script>
   const boxes = [...document.querySelectorAll('#tasks input')];
-  const KEY = 'pilot-day1';
+  const KEY = 'pilot-day1-v2';
   let saved = [];
   try { saved = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) {}
   boxes.forEach((b, i) => { b.checked = !!saved[i]; b.onchange = upd; });
