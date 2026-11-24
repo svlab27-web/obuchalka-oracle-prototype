@@ -117,6 +117,12 @@
   .chip { display: inline-block; font-size: 13px; font-weight: 600; border-radius: 99px; padding: 3px 10px; background: color-mix(in srgb, var(--accent, #7C3AED) 14%, transparent); color: var(--accent, #7C3AED); }
   .chip.ok { background: #e6f4ea; color: #067647; }
   .chip.lock { background: #fdf3dc; color: #8a5a00; }
+  .pwrap { position: fixed; inset: 0; display: flex; flex-direction: column; background: var(--bg2); z-index: 5; }
+  .ptop { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 16px; background: var(--bg); }
+  .ptop .back { margin: 0; font-weight: 600; }
+  .pframe { flex: 1; width: 100%; border: 0; background: #fff; }
+  .pbottom { padding: 8px 16px calc(8px + env(safe-area-inset-bottom)); background: var(--bg); }
+  .pbottom .btn { margin: 0; }
 </style>
 </head>
 <body>
@@ -574,8 +580,29 @@ function openProduct(p, src) {
   try { u = new URL(p.url); } catch (e) { return; }
   u.searchParams.set('from', 'app');
   if (src) u.searchParams.set('src', src);
-  if (USE_MOCK && !confirm('Демо: сейчас откроется квиз «' + p.title + '». В квизе будет кнопка «← Все продукты».')) return;
-  location.href = u.toString();
+  renderProductFrame(p, u.toString());
+}
+
+/** Квиз открывается внутри приложения: сверху «← Мои программы», снизу — следующий продукт.
+    Так из квиза всегда можно уйти, и сам квиз переделывать не нужно. */
+function renderProductFrame(p, url) {
+  setBack(renderShowcase);
+  window.scrollTo(0, 0);
+  const list = products();
+  const i = list.findIndex(x => x.id === p.id);
+  const next = list[i + 1];
+  const k = PRODUCT_KIND[p.id] || { kind: 'Квиз' };
+  const courseWord = cap(W().nom);
+  const nextBtn = next
+    ? el('button', { class: 'btn', onclick: () => openProduct(next) }, 'Дальше: ' + ((PRODUCT_KIND[next.id] || {}).kind || 'Квиз') + ' — ' + next.title + ' →')
+    : el('button', { class: 'btn', onclick: openCourse }, 'Дальше: ' + courseWord + ' — ' + (state.title || courseWord) + ' →');
+  const frame = el('iframe', { src: url, class: 'pframe', title: p.title, allow: 'clipboard-write; web-share' });
+  show(el('div', { class: 'pwrap' },
+    el('div', { class: 'ptop' },
+      el('button', { class: 'back', onclick: renderShowcase }, '← Мои программы'),
+      el('span', { class: 'chip' }, (i + 1) + ' · ' + k.kind)),
+    frame,
+    el('div', { class: 'pbottom' }, nextBtn)));
 }
 
 /** Тип продукта на карточке — чтобы было видно, что это три разных продукта (как «Мои программы» в Обучалке). */
