@@ -424,7 +424,8 @@ function mockCourse(action, f) {
       final: finished ? MOCK_C.final : undefined, reviewed: !!MOCK_C.reviewed, preview, buy, final_preview: preview ? MOCK_C.final : undefined,
       products: params.has('showcase') ? [
         { id: 'quiz1', title: 'Тест: почему после 40 тело перестало слушаться', url: 'https://svlab27-web.github.io/kviz-svetlana/' },
-        { id: 'quiz2', title: 'Диагностика сна', url: 'https://svlab27-web.github.io/kviz-svetlana/' }
+        params.has('paid') ? { id: 'quiz2', title: 'Диагностика сна', access: 'locked', price: '4 900 ₸', pay_url: 'https://kaspi.kz/' }
+          : { id: 'quiz2', title: 'Диагностика сна', url: 'https://svlab27-web.github.io/kviz-svetlana/' }
       ] : undefined };
   }
   if (preview && action === 'lessons_admin') {
@@ -448,6 +449,7 @@ function mockCourse(action, f) {
   if (preview && action === 'file_await') return { waiting: true };
   if (preview && action === 'file_remove') { L.forEach(l => { l.files = (l.files || []).filter(x => x.id !== Number(f.file)); }); return { removed: true }; }
   if (action === 'offer') return { ok: true };
+  if (action === 'paid') return { status: 'pending' };
   if (action === 'review') { MOCK_C.reviewed = true; return { saved: true }; }
   if (preview && action === 'submit') return { done: true, debrief: L.find(l => l.n === Number(f.lesson)).debrief, preview: true };
   if (preview && action === 'answer') return { saved: true, preview: true };
@@ -551,7 +553,7 @@ function buyCard(after) {
     el('h3', { style: 'margin:0 0 4px' }, head),
     el('div', { class: 'text' }, b.text || 'Остальные уроки — в полном ' + W().prep + '.'),
     b.url ? el('button', { class: 'btn light', onclick: () => openUrl(b.url) }, 'Открыть весь ' + W().nom) : null,
-    el('div', { class: 'sub', style: 'margin-top:8px' }, 'Уже оплатили? Эксперт пришлёт ссылку-приглашение — нажмите на неё или вставьте внизу главной.'));
+    b.url ? paidBox('course', state.buy_pending) : el('div', { class: 'sub', style: 'margin-top:8px' }, 'Уже оплатили? Эксперт пришлёт ссылку-приглашение — нажмите на неё или вставьте внизу главной.'));
 }
 
 function renderCourseNotInvited() {
@@ -559,7 +561,9 @@ function renderCourseNotInvited() {
   show(toShowcase(), expertHead(),
     el('div', { class: 'card center' },
       el('h2', {}, 'Вас пока нет в списке учеников'),
-      el('p', {}, 'Попросите у эксперта ссылку-приглашение и нажмите на неё — бот сразу откроет доступ.')),
+      el('p', {}, state.buy && state.buy.url ? 'Оплатите доступ — эксперт откроет его, как только увидит оплату. Или войдите по ссылке-приглашению.' : 'Попросите у эксперта ссылку-приглашение и нажмите на неё — бот сразу откроет доступ.'),
+      state.buy && state.buy.url && !state.buy_pending ? el('button', { class: 'btn', onclick: () => openUrl(state.buy.url) }, 'Купить →') : null,
+      state.buy && state.buy.url ? paidBox('course', state.buy_pending) : null),
     joinBox(),
     mockBar());
 }
@@ -571,9 +575,31 @@ function renderCourseNotInvited() {
 const PRODUCT_ID = /^[a-z0-9_]{1,30}$/;
 function products() {
   const list = state && Array.isArray(state.products) ? state.products : [];
-  return list.filter(p => p && /^https:\/\/[^\s"'<>]+$/i.test(p.url || '') && PRODUCT_ID.test(p.id || '')).slice(0, 6);
+  const https = (u) => /^https:\/\/[^\s"'<>]+$/i.test(u || '');
+  return list.filter(p => p && PRODUCT_ID.test(p.id || '') && (p.access === 'locked' || p.access === 'pending' || https(p.url))).slice(0, 6);
 }
 const hasShowcase = () => products().length > 0;
+const isOpen = (p) => !p.access || p.access === 'open';
+
+/** «Я оплатил(а)»: эксперту в бот уходит кнопка «Открыть доступ». */
+function paidBox(product, pending) {
+  const msg = el('div', { class: 'msg' + (pending ? ' ok' : '') },
+    pending ? '⏳ Эксперт проверит оплату и откроет доступ — бот пришлёт сообщение.' : '');
+  const btn = el('button', { class: 'btn secondary', onclick: async () => {
+    btn.disabled = true; msg.className = 'msg'; msg.textContent = 'Отправляем эксперту…';
+    try {
+      const r = await call('paid', { product });
+      if (r && r.status === 'open') return start();
+      haptic('success'); msg.className = 'msg ok';
+      msg.textContent = '⏳ Отправили эксперту. Как только он проверит оплату, доступ откроется — бот пришлёт сообщение.';
+      btn.hidden = true;
+      if (product !== 'course') { const p = (state.products || []).find(x => x.id === product); if (p) p.access = 'pending'; }
+      else state.buy_pending = true;
+    } catch (e) { haptic('error'); msg.className = 'msg bad'; msg.textContent = errText(e); btn.disabled = false; }
+  } }, '✅ Я оплатил(а)');
+  if (pending) btn.hidden = true;
+  return el('div', {}, btn, msg);
+}
 
 function openProduct(p, src) {
   let u;
@@ -590,11 +616,14 @@ function renderProductFrame(p, url) {
   window.scrollTo(0, 0);
   const list = products();
   const i = list.findIndex(x => x.id === p.id);
-  const next = list[i + 1];
+  const next = list[i + 1] && isOpen(list[i + 1]) ? list[i + 1] : null;
+  const nextLocked = list[i + 1] && !isOpen(list[i + 1]) ? list[i + 1] : null;
   const k = PRODUCT_KIND[p.id] || { kind: 'Квиз' };
   const courseWord = cap(W().nom);
   const nextBtn = next
     ? el('button', { class: 'btn', onclick: () => openProduct(next) }, 'Дальше: ' + ((PRODUCT_KIND[next.id] || {}).kind || 'Квиз') + ' — ' + next.title + ' →')
+    : nextLocked
+    ? el('button', { class: 'btn', onclick: renderShowcase }, 'Дальше: ' + ((PRODUCT_KIND[nextLocked.id] || {}).kind || 'Квиз') + ' — ' + nextLocked.title + ' →')
     : el('button', { class: 'btn', onclick: openCourse }, 'Дальше: ' + courseWord + ' — ' + (state.title || courseWord) + ' →');
   const frame = el('iframe', { src: url, class: 'pframe', title: p.title, allow: 'clipboard-write; web-share' });
   show(el('div', { class: 'pwrap' },
@@ -621,11 +650,20 @@ function renderShowcase() {
 
   const quizCards = list.map((p, i) => {
     const k = PRODUCT_KIND[p.id] || { kind: 'Квиз', about: '', go: 'Пройти' };
-    return el('div', { class: 'card pcard' },
+    if (isOpen(p)) return el('div', { class: 'card pcard' },
       step(i, k.kind),
+      p.price ? el('span', { class: 'chip ok', style: 'margin-left:6px' }, '✓ Оплачено') : null,
       el('div', { class: 'pt' }, p.title),
       el('div', { class: 'hint' }, p.text || k.about),
       el('button', { class: 'btn', onclick: () => openProduct(p) }, k.go + ' →'));
+    const pending = p.access === 'pending';
+    return el('div', { class: 'card pcard' },
+      step(i, k.kind, 'lock'),
+      el('span', { class: 'chip lock', style: 'margin-left:6px' }, pending ? '⏳ Ждём подтверждения' : '🔒 ' + (p.price || 'Платно')),
+      el('div', { class: 'pt' }, p.title),
+      el('div', { class: 'hint' }, p.text || k.about),
+      !pending && p.pay_url ? el('button', { class: 'btn', onclick: () => openUrl(p.pay_url) }, 'Купить — ' + (p.price || '') + ' →') : null,
+      paidBox(p.id, pending));
   });
 
   const word = cap(W().nom);
@@ -633,13 +671,18 @@ function renderShowcase() {
   const free = state.buy && state.buy.free > 1 ? 'Первые ' + state.buy.free + ' урока — бесплатно' : 'Первый урок — бесплатно';
   const courseCard = el('div', { class: 'card pcard' },
     step(list.length, word, st === 'active' ? '' : 'lock'),
-    st === 'active' ? null : el('span', { class: 'chip ' + (st === 'guest' ? 'ok' : 'lock'), style: 'margin-left:6px' }, st === 'guest' ? '🎁 ' + free : '🔒 По приглашению'),
+    st === 'active' ? null : el('span', { class: 'chip ' + (st === 'guest' ? 'ok' : 'lock'), style: 'margin-left:6px' },
+      state.all_free ? '🎁 Бесплатно' : state.buy_pending ? '⏳ Ждём подтверждения' : st === 'guest' ? '🎁 ' + free : state.buy ? '🔒 Платно' : '🔒 По приглашению'),
     el('div', { class: 'pt' }, state.title || word),
     el('div', { class: 'hint' }, lessonsWord + (state.expert && state.expert.name ? ' · ' + state.expert.name : '')),
     st === 'active' && n ? el('div', { class: 'bar' }, el('i', { style: `width:${Math.round(done / n * 100)}%` })) : null,
     st === 'active' && n ? el('div', { class: 'stats' }, `Пройдено уроков: ${done} из ${n}`) : null,
-    el('button', { class: 'btn', onclick: openCourse },
-      state.preview ? 'Открыть уроки (как видит ученик) →' : st === 'active' ? (done ? 'Продолжить' : 'Начать') + ' →' : st === 'guest' ? 'Начать бесплатно →' : 'Подробнее →'));
+    st === 'none' && state.buy && state.buy.text ? el('div', { class: 'hint', style: 'margin-top:4px' }, state.buy.text) : null,
+    st === 'none' && state.buy && state.buy.url && !state.buy_pending
+      ? el('button', { class: 'btn', onclick: () => openUrl(state.buy.url) }, 'Купить →')
+      : el('button', { class: 'btn', onclick: openCourse },
+          state.preview ? 'Открыть уроки (как видит ученик) →' : st === 'active' ? (done ? 'Продолжить' : 'Начать') + ' →' : st === 'guest' ? (state.all_free ? 'Начать →' : 'Начать бесплатно →') : 'Подробнее →'),
+    (st === 'none' || st === 'guest') && state.buy && state.buy.url ? paidBox('course', state.buy_pending) : null);
 
   show(previewBar(), expertHead(),
     el('div', { class: 'sub', style: 'margin:6px 0 2px' }, state.preview ? 'Ниже — так ваши продукты видят клиенты' : `Здравствуйте, ${state.name || 'гость'}!`),
@@ -673,8 +716,8 @@ function routeStartParam() {
   if (sp === 'learn') { openCourse(); return true; }
   const list = products();
   const p = list.find(x => x.id === sp);
-  if (p) { openProduct(p); return true; }
-  if (/^[A-Za-z0-9_-]{1,40}$/.test(sp)) { openProduct(list[0], sp); return true; }
+  if (p) { if (isOpen(p)) openProduct(p); else renderShowcase(); return true; }
+  if (/^[A-Za-z0-9_-]{1,40}$/.test(sp) && isOpen(list[0])) { openProduct(list[0], sp); return true; }
   return false;
 }
 
