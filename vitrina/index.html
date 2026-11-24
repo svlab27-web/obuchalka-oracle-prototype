@@ -1,0 +1,1094 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Интенсив</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  /* Цвета берём из темы Telegram — приложение само подстраивается под светлую и тёмную тему */
+  :root {
+    --bg: var(--tg-theme-bg-color, #ffffff);
+    --bg2: var(--tg-theme-secondary-bg-color, #f2f2f7);
+    --text: var(--tg-theme-text-color, #1c1c1e);
+    --hint: var(--tg-theme-hint-color, #8e8e93);
+    --link: var(--tg-theme-link-color, #2a7de1);
+    --btn: var(--tg-theme-button-color, #2a7de1);
+    --btn-text: var(--tg-theme-button-text-color, #ffffff);
+    --ok: #2e9e5b; --bad: #d64545;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg2); color: var(--text); font: 16px/1.5 -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+  main { max-width: 560px; margin: 0 auto; padding: 16px 16px 32px; }
+  h1 { font-size: 22px; margin: 4px 0 2px; }
+  h2 { font-size: 19px; margin: 0 0 6px; }
+  .sub { color: var(--hint); font-size: 14px; margin: 0 0 14px; }
+  .card { background: var(--bg); border-radius: 14px; padding: 14px 16px; margin: 10px 0; }
+  .day { background: none; padding: 0; display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; border: 0; font: inherit; color: inherit; cursor: pointer; }
+  .day .num { flex: 0 0 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; background: var(--bg2); }
+  .day .meta { flex: 1; min-width: 0; }
+  .day .t { font-weight: 600; }
+  .day .s { font-size: 13px; color: var(--hint); }
+  .day[disabled] { opacity: .55; cursor: default; }
+  .badge { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--bg2); color: var(--hint); white-space: nowrap; }
+  .badge.ok { color: var(--ok); }
+  .text { white-space: pre-line; }
+  label { display: block; font-weight: 600; margin: 4px 0 6px; }
+  input, textarea { width: 100%; font: inherit; color: var(--text); background: var(--bg2); border: 1px solid transparent; border-radius: 10px; padding: 10px 12px; }
+  input:focus, textarea:focus { outline: none; border-color: var(--btn); }
+  textarea { min-height: 96px; resize: vertical; }
+  .btn { display: block; width: 100%; border: 0; border-radius: 12px; padding: 13px 16px; margin-top: 10px; font: inherit; font-weight: 600; background: var(--btn); color: var(--btn-text); cursor: pointer; }
+  .btn.secondary { background: var(--bg2); color: var(--link); }
+  .btn[disabled] { opacity: .6; cursor: default; }
+  .msg { font-size: 14px; margin-top: 8px; min-height: 1em; }
+  .msg.ok { color: var(--ok); } .msg.bad { color: var(--bad); }
+  .back { background: none; border: 0; color: var(--link); font: inherit; padding: 4px 0; margin-bottom: 6px; cursor: pointer; }
+  .center { text-align: center; padding: 40px 10px; color: var(--hint); }
+  .mockbar { font-size: 12px; color: var(--hint); text-align: center; margin-top: 18px; }
+  .hidden { display: none; }
+
+  /* ---------- Курс: цвет эксперта (--accent) из «Настроек» ---------- */
+  :root { --accent: #1F3A8A; --accent-text: #ffffff; }
+  .course { --btn: var(--accent); --btn-text: var(--accent-text); }
+  .course input:focus, .course textarea:focus { border-color: var(--accent); }
+  .expert { display: flex; align-items: center; gap: 12px; margin: 4px 0 8px; }
+  .ava { flex: 0 0 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 20px; background: var(--accent); color: var(--accent-text); overflow: hidden; }
+  .ava img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .expert .n { font-weight: 700; font-size: 18px; line-height: 1.25; } .expert .r { font-size: 13px; color: var(--hint); }
+  .bar { height: 8px; border-radius: 4px; background: var(--bg2); overflow: hidden; margin: 8px 0 4px; }
+  .bar > i { display: block; height: 100%; background: var(--accent); border-radius: 4px; transition: width .4s; }
+  .stats { font-size: 14px; color: var(--hint); }
+  .day .num.done { background: var(--ok); color: #fff; }
+  .card.accent { background: var(--accent); color: var(--accent-text); }
+  .card.accent .sub { color: inherit; opacity: .85; }
+  .btn.light { background: rgba(255,255,255,.22); color: inherit; }
+  .hint { color: var(--hint); font-size: 14px; }
+  .fb { margin-top: 10px; border-left: 3px solid var(--accent); background: var(--bg2); border-radius: 0 10px 10px 0; padding: 8px 10px; white-space: pre-line; }
+  .fb .who { font-weight: 600; font-size: 13px; color: var(--accent); }
+  .video { position: relative; aspect-ratio: 16/9; border-radius: 12px; overflow: hidden; background: #111; margin: 10px 0 6px; }
+  .video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .file { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--bg2); }
+  .file:first-of-type { border-top: 0; }
+  .file .t { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .file .btn { width: auto; margin: 0; padding: 8px 12px; font-size: 14px; white-space: nowrap; }
+  .q { margin-bottom: 12px; } .q .qt { margin-bottom: 6px; }
+  .live { border: 2px solid var(--accent); }
+  .card.soft { border: 1px dashed var(--accent); }
+  .stars { display: flex; gap: 6px; margin: 4px 0 10px; }
+  .star { border: 0; background: none; font-size: 30px; line-height: 1; color: var(--accent); cursor: pointer; padding: 0 2px; }
+  label.check { display: flex; gap: 8px; align-items: center; font-weight: 400; font-size: 14px; margin-top: 8px; }
+  label.check input { width: auto; }
+  /* ---------- Оформленный текст урока и разбора (как в обучалке): карточки, списки, жирный ---------- */
+  .rich { white-space: normal; }
+  .rich p { margin: 0 0 10px; }
+  .rich ul { margin: 0 0 10px; padding-left: 20px; } .rich li { margin: 3px 0; }
+  .rich strong { font-weight: 700; }
+  .rich .sec { border: 1px solid color-mix(in srgb, var(--accent) 16%, var(--bg2)); border-radius: 14px; padding: 12px; margin: 12px 0 0; box-shadow: 0 1px 3px rgba(16,24,40,.06); }
+  .rich .sec > :last-child { margin-bottom: 0; }
+  .rich .sec-h { display: flex; gap: 10px; align-items: center; margin: 0 0 8px; }
+  .rich .sec-h .num { flex: 0 0 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--accent-text); font-weight: 700; font-size: 15px; }
+  .rich .sec-h h3 { margin: 0; font-size: 17px; line-height: 1.3; }
+  .rich .sec-h small { display: block; font-size: 11px; font-weight: 600; color: var(--hint); text-transform: uppercase; letter-spacing: .05em; }
+  .rich .goal { display: flex; gap: 10px; align-items: flex-start; background: color-mix(in srgb, var(--accent) 12%, var(--bg)); border-radius: 12px; padding: 10px 12px; margin: 0 0 12px; }
+  .rich .goal small { display: block; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--accent); }
+  .rich .note { display: flex; gap: 8px; border-radius: 10px; padding: 8px 10px; margin: 0 0 10px; font-size: 15px; }
+  .rich .note.res { background: color-mix(in srgb, var(--ok) 14%, var(--bg)); } .rich .note.res .ic { color: var(--ok); font-weight: 700; }
+  .rich .note.tip { background: color-mix(in srgb, #f5b400 16%, var(--bg)); }
+  .rich .check { background: color-mix(in srgb, var(--ok) 12%, var(--bg)); border-radius: 12px; padding: 10px 12px; margin: 0 0 10px; }
+  .rich .check h4 { margin: 0 0 8px; font-size: 16px; }
+  .rich .check ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+  .rich .check li { display: flex; gap: 8px; margin: 0; }
+  .rich .check li::before { content: "✓"; flex: 0 0 20px; height: 20px; border-radius: 5px; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: var(--ok); border: 1.5px solid var(--ok); }
+  .fb.rich { padding: 10px 12px; }
+  .q .qt { white-space: pre-line; }
+  /* «Следующий урок» — заметная кирпичная кнопка, текст в одну строку */
+  .btn.next { background: #B4532A; color: #fff; margin-top: 16px; padding: 13px 16px; text-align: center; animation: nextGlow 1.8s ease-in-out infinite; }
+  .btn.next .nh { display: block; font-weight: 700; font-size: 15px; opacity: .92; }
+  .btn.next .nh i { display: inline-block; font-style: normal; animation: nextArrow 1.8s ease-in-out infinite; }
+  .btn.next .nt { display: block; font-weight: 700; font-size: 18px; line-height: 1.3; margin-top: 3px; }
+  @keyframes nextGlow { 0%,100% { box-shadow: 0 0 0 0 rgba(180,83,42,.55); } 50% { box-shadow: 0 0 0 8px rgba(180,83,42,0); transform: scale(1.02); } }
+  @keyframes nextArrow { 0%,100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
+  @media (prefers-reduced-motion: reduce) { .btn.next, .btn.next .nh i { animation: none; } }
+  /* «Обсудить урок в чате» — заливка цветом эксперта, в тон «Сдать урок» */
+  .btn.chat, .course .btn.secondary { background: var(--accent); color: var(--accent-text); font-weight: 700; }
+  .vh { font-size: 24px; margin: 0 0 4px; }
+  .pcard { padding: 16px; }
+  .pcard .pt { font-size: 18px; font-weight: 700; line-height: 1.3; margin: 8px 0 4px; }
+  .chip { display: inline-block; font-size: 13px; font-weight: 600; border-radius: 99px; padding: 3px 10px; background: color-mix(in srgb, var(--accent, #7C3AED) 14%, transparent); color: var(--accent, #7C3AED); }
+  .chip.ok { background: #e6f4ea; color: #067647; }
+  .chip.lock { background: #fdf3dc; color: #8a5a00; }
+</style>
+</head>
+<body>
+<main id="app"><div class="center">Загружаем…</div></main>
+
+<script>
+/* ==================== НАСТРОЙКА ====================
+   Одна страница — для всех учеников (app.neurovialabs.kz).
+   Свой скрипт ученик передаёт в ссылке: ?s=<идентификатор развёртывания>
+   (часть адреса между /macros/s/ и /exec). Ссылку с ?s= бот получает сам
+   при «Интенсив → Подключить бота».
+   Без ?s= страница никуда не ходит и пишет «Приложение не подключено».
+   ?mock — демо-режим с ненастоящими данными (показать экраны без бота). */
+const params = new URLSearchParams(location.search);
+const SCRIPT_ID = params.get('s') || '';
+// Только идентификатор Apps Script — чужой адрес подставить нельзя
+const SCRIPT_URL = /^AKfy[\w-]{20,200}$/.test(SCRIPT_ID)
+  ? 'https://script.google.com/macros/s/' + SCRIPT_ID + '/exec'
+  : '';
+/* ==================================================== */
+
+const tg = window.Telegram && window.Telegram.WebApp;
+if (tg) { tg.ready(); tg.expand(); }
+const initData = (tg && tg.initData) || '';
+const USE_MOCK = params.has('mock');
+
+const ERRORS = {
+  bad_signature: 'Не удалось проверить вход. Откройте приложение заново из бота.',
+  expired: 'Сессия устарела. Закройте приложение и откройте его снова из бота.',
+  not_invited: 'Вас пока нет в списке участников. Попросите у эксперта ссылку-приглашение.',
+  wrong_code: 'Кодовое слово не подошло. Проверьте написание и попробуйте ещё раз.',
+  day_closed: 'Этот день ещё закрыт.',
+  too_many_attempts: 'Слишком много попыток. Напишите эксперту — он отметит вас вручную.',
+  bad_request: 'Что-то не так с запросом. Обновите приложение.',
+  busy: 'Сервер занят, пробуем ещё раз…',
+  not_answered: 'Ответьте на все задания тетради.',
+  bot_blocked: 'Бот не может вам написать. Откройте чат с ботом, нажмите «Старт» и попробуйте ещё раз.',
+  send_failed: 'Не удалось отправить файл. Попробуйте ещё раз.',
+  invite_used: 'Это приглашение уже использовано. Попросите у эксперта новое.',
+  invite_not_found: 'Приглашение не найдено. Проверьте ссылку или попросите у эксперта новую.',
+  forbidden: 'Это может только эксперт.',
+  too_big: 'Файл больше 10 МБ — отправьте его через чат.',
+  network: 'Нет связи с сервером. Проверьте интернет и попробуйте ещё раз.'
+};
+const errText = (e) => (e && (ERRORS[e.error] || e.message)) || ERRORS.network;
+
+/* ---------- Обмен со скриптом ----------
+   POST, тело — JSON, заголовок text/plain (без предварительной проверки CORS).
+   Повторяем до 3 раз со случайной паузой 1–3 с, если скрипт ответил busy
+   или Google отказал (сеть, ответ не JSON) — так пик после эфира
+   («отметьтесь кодовым словом») растягивается на секунды вместо ошибки.
+   attend и answer можно повторять: посещение отмечается один раз, ответ перезаписывается. */
+async function call(action, fields = {}) {
+  if (USE_MOCK) return mockCall(action, fields);
+  const MAX_RETRIES = 3;
+  for (let attempt = 0; ; attempt++) {
+    let res = null;
+    try {
+      const r = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action, initData, ...fields })
+      });
+      res = await r.json();
+    } catch (e) {
+      res = null; // сеть или Google отдал не JSON (перегружен)
+    }
+    if (res && res.ok) return res.data;
+    const retryable = !res || res.error === 'busy';
+    if (retryable && attempt < MAX_RETRIES) { await sleep(1000 + Math.random() * 2000); continue; }
+    throw res || { error: 'network' };
+  }
+}
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+/* ---------- Заглушка: ведёт себя как скрипт Эльвиры ---------- */
+const MOCK = {
+  name: 'Анна',
+  status: params.get('mock') === 'not_invited' ? 'not_invited' : 'active',
+  booking_url: 'https://calendar.google.com/calendar/appointments/schedules/DEMO',
+  codes: { 1: 'весна', 2: 'лето' },
+  attempts: {},
+  days: [
+    { day: 1, title: 'Знакомство и цель', open: true, opens_at: '2026-11-25', attended: true,
+      text: 'Сегодня знакомимся и ставим цель на интенсив.\nПосмотрите эфир и ответьте на два вопроса ниже.',
+      questions: [ { id: '1.1', text: 'Какой результат вы хотите получить к концу интенсива?', answer: 'Запустить первую консультацию' },
+                   { id: '1.2', text: 'Что сейчас мешает больше всего?', answer: null } ] },
+    { day: 2, title: 'Ваш клиент', open: true, opens_at: '2026-11-26', attended: false,
+      text: 'Разбираем, кто ваш клиент и что его беспокоит.\nКодовое слово назовут в конце эфира.',
+      questions: [ { id: '2.1', text: 'Опишите одного реального клиента: кто он и с чем пришёл?', answer: null } ] },
+    { day: 3, title: 'Первое предложение', open: false, opens_at: '2026-11-27', attended: false },
+    { day: 4, title: 'Запуск', open: false, opens_at: '2026-11-28', attended: false }
+  ]
+};
+async function mockCall(action, f) {
+  await sleep(350);
+  if (params.get('mock') === 'course') return mockCourse(action, f);
+  if (action === 'me') {
+    if (MOCK.status !== 'active') return { name: MOCK.name, status: 'not_invited', booking_url: '', days: [] };
+    // Закрытые дни — без текста и вопросов (как договорились)
+    const days = MOCK.days.map(d => d.open ? JSON.parse(JSON.stringify(d))
+      : { day: d.day, title: d.title, open: false, opens_at: d.opens_at, attended: false, questions: [] });
+    return { name: MOCK.name, status: 'active', booking_url: MOCK.booking_url, days };
+  }
+  const d = MOCK.days.find(x => x.day === f.day);
+  if (!d) throw { ok: false, error: 'bad_request' };
+  if (!d.open) throw { ok: false, error: 'day_closed' };
+  if (action === 'attend') {
+    MOCK.attempts[f.day] = (MOCK.attempts[f.day] || 0) + 1;
+    if (MOCK.attempts[f.day] > 5) throw { ok: false, error: 'too_many_attempts' };
+    if (norm(f.code) !== MOCK.codes[f.day]) throw { ok: false, error: 'wrong_code' };
+    d.attended = true; return { attended: true };
+  }
+  if (action === 'answer') {
+    const q = d.questions.find(x => x.id === f.question_id);
+    if (!q || typeof f.text !== 'string' || !f.text.trim() || f.text.length > 4000) throw { ok: false, error: 'bad_request' };
+    q.answer = f.text; return { saved: true, saved_at: new Date().toISOString() };
+  }
+  throw { ok: false, error: 'bad_request' };
+}
+const norm = (s) => String(s || '').trim().toLowerCase().replace(/ё/g, 'е');
+
+/* ---------- Отрисовка (только textContent — никакого HTML из таблицы) ---------- */
+const app = document.getElementById('app');
+let state = null;
+
+// replaceChildren печатает null как текст «null» — пустые части отбрасываем
+const show = (...kids) => app.replaceChildren(...kids.flat().filter(k => k != null));
+function el(tag, attrs = {}, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class') n.className = v;
+    else if (k.startsWith('on')) n.addEventListener(k.slice(2), v);
+    else if (v !== false && v != null) n.setAttribute(k, v === true ? '' : v);
+  }
+  for (const k of kids.flat()) if (k != null) n.append(k.nodeType ? k : document.createTextNode(String(k)));
+  return n;
+}
+const fmtDate = (iso) => { try { return new Date(iso + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }); } catch (e) { return iso; } };
+
+function setBack(fn) {
+  if (!tg || !tg.BackButton) return;
+  tg.BackButton.offClick(setBack._fn || (() => {}));
+  if (fn) { setBack._fn = fn; tg.BackButton.onClick(fn); tg.BackButton.show(); }
+  else { setBack._fn = null; tg.BackButton.hide(); }
+}
+
+function openBooking() {
+  if (!state.booking_url) return;
+  if (tg && tg.openLink) tg.openLink(state.booking_url); else window.open(state.booking_url, '_blank');
+}
+
+function renderError(e, retry) {
+  setBack(null);
+  show(el('div', { class: 'card center' },
+    el('p', {}, errText(e)),
+    retry ? el('button', { class: 'btn', onclick: retry }, 'Попробовать ещё раз') : null));
+}
+
+function renderNotInvited() {
+  setBack(null);
+  show(
+    el('div', { class: 'card center' },
+      el('h2', {}, 'Вас пока нет в списке участников'),
+      el('p', {}, 'Попросите у эксперта ссылку-приглашение и нажмите на неё — бот сразу откроет доступ.')),
+    joinBox(),
+    mockBar());
+}
+
+/**
+ * Приглашение прямо в приложении: вставить ссылку от эксперта (или код). Работает и когда
+ * бот молчит — приложение ходит в скрипт напрямую.
+ */
+function joinBox() {
+  const input = el('input', { placeholder: 'https://t.me/…?start=inv_…', autocomplete: 'off', maxlength: '200' });
+  const msg = el('div', { class: 'msg' });
+  const btn = el('button', { class: 'btn', onclick: async () => {
+    const code = input.value.trim();
+    if (!code) { msg.className = 'msg bad'; msg.textContent = 'Вставьте ссылку-приглашение.'; return; }
+    btn.disabled = true; msg.className = 'msg'; msg.textContent = 'Проверяем…';
+    try { await call('join', { code }); haptic('success'); start(); }
+    catch (e) { haptic('error'); msg.className = 'msg bad'; msg.textContent = errText(e); btn.disabled = false; }
+  } }, 'Войти по приглашению');
+  return el('div', { class: 'card' },
+    el('label', {}, 'Есть ссылка-приглашение?'),
+    el('div', { class: 'hint', style: 'margin-bottom:8px' }, 'Нажали на неё, а бот молчит? Вставьте ссылку сюда.'),
+    input, btn, msg);
+}
+
+function renderHome() {
+  setBack(null);
+  const done = state.days.filter(d => d.attended).length;
+  show(
+    el('h1', {}, `Здравствуйте, ${state.name || 'участник'}!`),
+    el('p', { class: 'sub' }, `Отмечено дней: ${done} из ${state.days.length}`),
+    ...state.days.map(d => el('div', { class: 'card' },
+      el('button', { class: 'day', disabled: !d.open, onclick: () => renderDay(d.day) },
+        el('span', { class: 'num' }, d.day),
+        el('span', { class: 'meta' },
+          el('div', { class: 't' }, d.title),
+          el('div', { class: 's' }, d.open ? `Ответов: ${answeredCount(d)} из ${d.questions.length}` : `Откроется ${fmtDate(d.opens_at)}`)),
+        el('span', { class: 'badge' + (d.attended ? ' ok' : '') }, d.attended ? '✓ Был(а)' : d.open ? 'Открыт' : '🔒')))),
+    state.booking_url ? el('button', { class: 'btn', onclick: openBooking }, '📅 Записаться на консультацию') : null,
+    mockBar());
+}
+const answeredCount = (d) => d.questions.filter(q => q.answer).length;
+
+function renderDay(n) {
+  const d = state.days.find(x => x.day === n);
+  if (!d || !d.open) return renderHome();
+  setBack(renderHome);
+  window.scrollTo(0, 0);
+
+  // Посещение
+  const attendBox = el('div', { class: 'card' });
+  if (d.attended) {
+    attendBox.append(el('div', { class: 'msg ok' }, '✓ Посещение отмечено'));
+  } else {
+    const input = el('input', { placeholder: 'Кодовое слово с эфира', autocomplete: 'off', maxlength: '60' });
+    const msg = el('div', { class: 'msg' });
+    const btn = el('button', { class: 'btn', onclick: async () => {
+      const code = input.value.trim();
+      if (!code) { msg.className = 'msg bad'; msg.textContent = 'Введите кодовое слово.'; return; }
+      btn.disabled = true; msg.className = 'msg'; msg.textContent = 'Проверяем…';
+      try {
+        await call('attend', { day: d.day, code });
+        d.attended = true; haptic('success'); renderDay(n);
+      } catch (e) { haptic('error'); msg.className = 'msg bad'; msg.textContent = errText(e); btn.disabled = false; }
+    } }, 'Отметить посещение');
+    attendBox.append(el('label', {}, 'Отметить посещение'), input, btn, msg);
+  }
+
+  // Задания
+  const qBoxes = d.questions.map(q => {
+    const ta = el('textarea', { maxlength: '4000', placeholder: 'Ваш ответ' });
+    ta.value = q.answer || '';
+    const msg = el('div', { class: 'msg' + (q.answer ? ' ok' : '') }, q.answer ? 'Ответ сохранён' : '');
+    const btn = el('button', { class: 'btn', onclick: async () => {
+      const text = ta.value.trim();
+      if (!text) { msg.className = 'msg bad'; msg.textContent = 'Напишите ответ.'; return; }
+      btn.disabled = true; msg.className = 'msg'; msg.textContent = 'Сохраняем…';
+      try {
+        await call('answer', { day: d.day, question_id: q.id, text });
+        q.answer = text; haptic('success'); msg.className = 'msg ok'; msg.textContent = 'Ответ сохранён'; btn.textContent = 'Обновить ответ';
+      } catch (e) { haptic('error'); msg.className = 'msg bad'; msg.textContent = errText(e); }
+      btn.disabled = false;
+    } }, q.answer ? 'Обновить ответ' : 'Отправить ответ');
+    return el('div', { class: 'card' }, el('label', {}, q.text), ta, btn, msg);
+  });
+
+  show(
+    el('button', { class: 'back', onclick: renderHome }, '← Все дни'),
+    el('div', { class: 'card' }, el('h2', {}, `День ${d.day}. ${d.title}`), el('div', { class: 'text' }, d.text || '')),
+    attendBox,
+    ...qBoxes,
+    state.booking_url ? el('button', { class: 'btn secondary', onclick: openBooking }, '📅 Записаться на консультацию') : null);
+}
+
+function haptic(type) { try { tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred(type); } catch (e) {} }
+function mockBar() { return USE_MOCK ? el('div', { class: 'mockbar' }, 'Демо-режим: данные ненастоящие') : null; }
+
+/* ==================== КУРС (этап 1) ====================
+   Формат «курс» — таблица эксперта с листом «Уроки». Скрипт отдаёт format: 'course'.
+   Уроки → видео / текст / материалы / эфир-ссылка → рабочая тетрадь → «Сдать урок» → разбор.
+   Бренд эксперта: название, имя, фото, цвет. Финал с предложением — после всех уроков. */
+
+/* Демо курса: ?mock=course — ведёт себя как скрипт */
+const MOCK_C = {
+  title: 'Спокойный сон за 5 уроков',
+  expert: { name: 'Айгуль Сарсенова', color: '#0A8F6C', photo: '' },
+  chat_url: 'https://t.me/+demo_chat',
+  final: { text: 'Личная работа со мной: 4 встречи, разбор вашего режима. Для выпускников курса — скидка 20%.', url: 'https://pay.kaspi.kz/pay/demo', until: '2026-11-30' },
+  lessons: [
+    { n: 1, title: 'Почему мы не высыпаемся', text: 'Сон — это навык. В этом уроке разберём, что мешает уснуть вечером, и составим ваш личный «вечерний ритуал».',
+      video: 'https://youtu.be/dQw4w9WgXcQ', material: 'https://drive.google.com/file/d/demo', live: '',
+      debrief: 'Почти у всех главная помеха — экран телефона за час до сна. Начните с малого: телефон на зарядку в другой комнате в 22:00.',
+      files: [{ id: 2, title: 'Чек-лист «Вечерний ритуал».pdf', type: 'document', protected: false }],
+      questions: [{ id: '1.1', text: 'Во сколько вы обычно засыпаете?', answer: '' }, { id: '1.2', text: 'Что мешает уснуть раньше?', answer: '' }] },
+    { n: 2, title: 'Режим, который работает', text: 'Строим режим под ваш день: время подъёма, свет, кофе.',
+      video: '', material: '', live: 'https://meet.google.com/demo', live_when: '25.11 в 19:00', debrief: 'Главное — одинаковое время подъёма, даже в выходные.',
+      files: [{ id: 3, title: 'Аудио-практика «Дыхание 4-7-8»', type: 'audio', protected: true }],
+      questions: [{ id: '2.1', text: 'Во сколько вы будете вставать всю неделю?', answer: '' }] },
+    { n: 3, title: 'Итоги и что дальше', text: 'Сравниваем, как вы спали в начале и сейчас.', video: '', material: '', live: '', debrief: 'Вы молодец! Закрепляйте режим ещё 3 недели.', files: [], questions: [] },
+  ],
+  done: {},
+};
+function mockCourse(action, f) {
+  const L = MOCK_C.lessons;
+  const preview = params.get('state') === 'expert'; // ?mock=course&state=expert — режим просмотра эксперта
+  const guest = params.get('state') === 'guest';    // ?mock=course&state=guest — гость бесплатного урока
+  const isOpenM = (i) => preview || (guest ? i === 0 : (i === 0 || !!MOCK_C.done[L[i - 1].n]));
+  if (action === 'me') {
+    const lessons = L.map((l, i) => !isOpenM(i) ? { n: l.n, title: l.title, open: false, lock: guest ? 'paid' : 'seq', opens_at: '' }
+      : { ...JSON.parse(JSON.stringify(l)), open: true, done: !preview && !!MOCK_C.done[l.n], debrief: preview || MOCK_C.done[l.n] ? l.debrief : '' });
+    const finished = !preview && !guest && L.every(l => MOCK_C.done[l.n]);
+    const buy = guest || preview ? { text: 'Весь курс — 3 урока, разборы и чат потока. 15 000 ₸', url: 'https://kaspi.kz/', free: 1 } : undefined;
+    return { format: 'course', word: { nom: 'курс', gen: 'курса', prep: 'курсе' }, status: params.get('state') === 'not_invited' ? 'not_invited' : guest ? 'guest' : 'active', name: 'Анна', title: MOCK_C.title,
+      expert: MOCK_C.expert, chat_url: MOCK_C.chat_url, booking_url: '', open_mode: preview ? 'all' : 'seq', lessons, finished,
+      final: finished ? MOCK_C.final : undefined, reviewed: !!MOCK_C.reviewed, preview, buy, final_preview: preview ? MOCK_C.final : undefined,
+      products: params.has('showcase') ? [
+        { id: 'quiz1', title: 'Тест: почему после 40 тело перестало слушаться', url: 'https://svlab27-web.github.io/kviz-svetlana/' },
+        { id: 'quiz2', title: 'Диагностика сна', url: 'https://svlab27-web.github.io/kviz-svetlana/' }
+      ] : undefined };
+  }
+  if (preview && action === 'lessons_admin') {
+    return { open_mode: 'seq', max_questions: 5, lessons: L.map(l => ({ n: l.n, title: l.title, text: l.text, video: l.video, material: l.material,
+      live: l.live ? (l.live_when ? l.live_when + ' ' : '') + l.live : '', debrief: l.debrief, opens: '',
+      questions: l.questions.map(q => q.text), files: (l.files || []).map(x => ({ ...x })) })) };
+  }
+  if (preview && action === 'lesson_save') {
+    if (!String(f.title || '').trim()) throw { ok: false, error: 'bad_request', message: 'Напишите название урока.' };
+    let l = L.find(x => x.n === Number(f.n));
+    if (!l) { l = { n: L.length + 1, files: [], questions: [] }; L.push(l); }
+    Object.assign(l, { title: f.title.trim(), text: f.text, video: f.video, material: f.material, live: f.live, live_when: '', debrief: f.debrief,
+      questions: (f.questions || []).filter(q => q.trim()).map((q, k) => ({ id: l.n + '.' + (k + 1), text: q.trim(), answer: '' })) });
+    return { saved: true, n: l.n };
+  }
+  if (preview && action === 'file_upload') {
+    const l = L.find(x => x.n === Number(f.lesson));
+    l.files.push({ id: 100 + Math.floor(Math.random() * 1000), title: f.name, type: /^image\//.test(f.mime) ? 'photo' : 'document', protected: false });
+    return { saved: true };
+  }
+  if (preview && action === 'file_await') return { waiting: true };
+  if (preview && action === 'file_remove') { L.forEach(l => { l.files = (l.files || []).filter(x => x.id !== Number(f.file)); }); return { removed: true }; }
+  if (action === 'offer') return { ok: true };
+  if (action === 'review') { MOCK_C.reviewed = true; return { saved: true }; }
+  if (preview && action === 'submit') return { done: true, debrief: L.find(l => l.n === Number(f.lesson)).debrief, preview: true };
+  if (preview && action === 'answer') return { saved: true, preview: true };
+  const i = L.findIndex(l => l.n === Number(f.lesson));
+  if (i < 0) throw { ok: false, error: 'bad_request' };
+  if (!isOpenM(i)) throw { ok: false, error: 'day_closed' };
+  const l = L[i];
+  if (action === 'answer') { l.questions.find(q => q.id === f.question_id).answer = f.text; return { saved: true }; }
+  if (action === 'submit') {
+    if (l.questions.some(q => !String(q.answer || '').trim())) throw { ok: false, error: 'not_answered' };
+    MOCK_C.done[l.n] = 'сейчас'; return { done: true, debrief: l.debrief };
+  }
+  if (action === 'material') return { sent: true };
+  throw { ok: false, error: 'bad_request' };
+}
+
+/** Цвет эксперта → --accent; текст на нём — белый или чёрный по яркости. */
+function applyBrand(e) {
+  const c = e && /^#[0-9A-Fa-f]{6}$/.test(e.color) ? e.color : '#1F3A8A';
+  const r = parseInt(c.slice(1, 3), 16), g = parseInt(c.slice(3, 5), 16), b = parseInt(c.slice(5, 7), 16);
+  const light = (r * 299 + g * 587 + b * 114) / 1000 > 160;
+  document.documentElement.style.setProperty('--accent', c);
+  document.documentElement.style.setProperty('--accent-text', light ? '#111111' : '#ffffff');
+  app.classList.add('course');
+  if (tg && tg.setHeaderColor) { try { tg.setHeaderColor('secondary_bg_color'); } catch (err) {} }
+}
+
+/** ID ролика YouTube из ссылки — только 11 символов [\w-], иначе ''. */
+function youtubeId(url) {
+  const m = String(url || '').match(/^https:\/\/(?:www\.|m\.)?(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:[^#]*&)?v=|embed\/|shorts\/|live\/))([\w-]{11})(?:[?&#/]|$)/);
+  return m ? m[1] : '';
+}
+
+/** Открыть ссылку: t.me — внутри Telegram, остальное — во внешнем браузере. */
+function openUrl(u) {
+  if (!/^https?:\/\//i.test(u || '')) return;
+  if (tg && /^https:\/\/t\.me\//i.test(u) && tg.openTelegramLink) return tg.openTelegramLink(u);
+  if (tg && tg.openLink) return tg.openLink(u);
+  window.open(u, '_blank');
+}
+
+const lessonsDone = () => state.lessons.filter(l => l.done).length;
+/** Слово эксперта: интенсив / курс / практикум / марафон (строка «Как называть ваш продукт»). */
+const W = () => (state && state.word) || { nom: 'интенсив', gen: 'интенсива', prep: 'интенсиве' };
+const cap = (x) => x ? x.charAt(0).toUpperCase() + x.slice(1) : x;
+
+function expertHead() {
+  const e = state.expert || {};
+  const letter = (e.name || state.title || '•').trim().charAt(0).toUpperCase();
+  const ava = el('div', { class: 'ava' });
+  if (/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(e.photo || '')) ava.append(el('img', { src: e.photo, alt: '' }));
+  else ava.append(letter);
+  return el('div', { class: 'expert' }, ava,
+    el('div', {}, el('div', { class: 'n' }, state.title || cap(W().nom)), e.name ? el('div', { class: 'r' }, e.name) : null));
+}
+
+function finalCard() {
+  if (!state.finished) return null;
+  const f = state.final || {};
+  return el('div', { class: 'card accent' },
+    el('h2', {}, '🎉 Вы прошли ' + W().nom + '!'),
+    f.text ? el('div', { class: 'text' }, f.text) : el('div', { class: 'sub' }, 'Все уроки пройдены. Спасибо, что дошли до конца!'),
+    f.until ? el('div', { class: 'sub', style: 'margin-top:6px' }, `Предложение действует до ${fmtDate(f.until)}`) : null,
+    f.url ? el('button', { class: 'btn light', onclick: () => { call('offer').catch(() => {}); openUrl(f.url); } }, 'Перейти к оплате') : null);
+}
+
+/** Отзыв в один клик: звёзды, пара строк, «можно опубликовать». Только после финала, один раз. */
+function reviewCard() {
+  if (!state.finished || state.reviewed) return null;
+  let stars = 0;
+  const starBtns = [1, 2, 3, 4, 5].map(k => el('button', { class: 'star', 'aria-label': k + ' из 5', onclick: () => {
+    stars = k; starBtns.forEach((b, j) => { b.textContent = j < k ? '★' : '☆'; });
+  } }, '☆'));
+  const ta = el('textarea', { maxlength: '1500', placeholder: 'Что изменилось после ' + W().gen + '? Пара предложений' });
+  const pub = el('input', { type: 'checkbox', checked: true });
+  const msg = el('div', { class: 'msg' });
+  const btn = el('button', { class: 'btn', onclick: async () => {
+    if (!stars) { msg.className = 'msg bad'; msg.textContent = 'Поставьте оценку.'; return; }
+    btn.disabled = true; msg.className = 'msg'; msg.textContent = 'Отправляем…';
+    try {
+      await call('review', { stars, text: ta.value.trim(), publish: pub.checked });
+      haptic('success'); state.reviewed = true;
+      box.replaceChildren(el('div', { class: 'msg ok', style: 'margin:0;font-weight:600' }, '💛 Спасибо за отзыв!'));
+    } catch (e) { haptic('error'); msg.className = 'msg bad'; msg.textContent = errText(e); btn.disabled = false; }
+  } }, 'Отправить отзыв');
+  const box = el('div', { class: 'card' },
+    el('label', {}, 'Как вам ' + W().nom + '?'),
+    el('div', { class: 'stars' }, ...starBtns), ta,
+    el('label', { class: 'check' }, pub, ' Можно опубликовать с моим именем'),
+    btn, msg);
+  return box;
+}
+
+/** Гость бесплатного урока: что в полном интенсиве, кнопка оплаты и «уже оплатил — ссылка-приглашение». */
+function buyCard(after) {
+  if (state.status !== 'guest' || !state.buy) return null;
+  const b = state.buy;
+  const head = after ? '👏 Понравилось? Это был бесплатный урок'
+    : (b.free === 1 ? '🎁 Первый урок — бесплатно' : '🎁 Первые ' + b.free + ' урока — бесплатно');
+  return el('div', { class: 'card accent' },
+    el('h3', { style: 'margin:0 0 4px' }, head),
+    el('div', { class: 'text' }, b.text || 'Остальные уроки — в полном ' + W().prep + '.'),
+    b.url ? el('button', { class: 'btn light', onclick: () => openUrl(b.url) }, 'Открыть весь ' + W().nom) : null,
+    el('div', { class: 'sub', style: 'margin-top:8px' }, 'Уже оплатили? Эксперт пришлёт ссылку-приглашение — нажмите на неё или вставьте внизу главной.'));
+}
+
+function renderCourseNotInvited() {
+  setBack(null);
+  show(toShowcase(), expertHead(),
+    el('div', { class: 'card center' },
+      el('h2', {}, 'Вас пока нет в списке учеников'),
+      el('p', {}, 'Попросите у эксперта ссылку-приглашение и нажмите на неё — бот сразу откроет доступ.')),
+    joinBox(),
+    mockBar());
+}
+
+/* ---------- Витрина «Мои продукты»: квизы эксперта + этот курс в одном приложении ----------
+   Скрипт отдаёт в me поле products: [{ id, title, text, url }] — из «Настроек» таблицы.
+   Нет products — витрины нет, всё как раньше. Квиз открывается в этом же окне Telegram;
+   назад — кнопкой квиза «← Все продукты» (history.back) или системной «Назад». */
+const PRODUCT_ID = /^[a-z0-9_]{1,30}$/;
+function products() {
+  const list = state && Array.isArray(state.products) ? state.products : [];
+  return list.filter(p => p && /^https:\/\/[^\s"'<>]+$/i.test(p.url || '') && PRODUCT_ID.test(p.id || '')).slice(0, 6);
+}
+const hasShowcase = () => products().length > 0;
+
+function openProduct(p, src) {
+  let u;
+  try { u = new URL(p.url); } catch (e) { return; }
+  u.searchParams.set('from', 'app');
+  if (src) u.searchParams.set('src', src);
+  if (USE_MOCK && !confirm('Демо: сейчас откроется квиз «' + p.title + '». В квизе будет кнопка «← Все продукты».')) return;
+  location.href = u.toString();
+}
+
+/** Тип продукта на карточке — чтобы было видно, что это три разных продукта (как «Мои программы» в Обучалке). */
+const PRODUCT_KIND = {
+  quiz1: { kind: 'Квиз', about: 'Пара минут — и короткий ответ для вас', go: 'Пройти квиз' },
+  quiz2: { kind: 'Квиз-диагностика', about: 'Подробный разбор вашей ситуации и рекомендации', go: 'Пройти диагностику' },
+};
+
+function renderShowcase() {
+  setBack(null);
+  window.scrollTo(0, 0);
+  const list = products();
+  const n = state.lessons.length, done = lessonsDone();
+  const st = state.status;
+  const step = (i, kind, cls) => el('span', { class: 'chip' + (cls ? ' ' + cls : '') }, (i + 1) + ' · ' + kind);
+
+  const quizCards = list.map((p, i) => {
+    const k = PRODUCT_KIND[p.id] || { kind: 'Квиз', about: '', go: 'Пройти' };
+    return el('div', { class: 'card pcard' },
+      step(i, k.kind),
+      el('div', { class: 'pt' }, p.title),
+      el('div', { class: 'hint' }, p.text || k.about),
+      el('button', { class: 'btn', onclick: () => openProduct(p) }, k.go + ' →'));
+  });
+
+  const word = cap(W().nom);
+  const lessonsWord = n ? n + ' ' + plural(n, 'урок', 'урока', 'уроков') + ' с заданиями' : 'Уроки с заданиями';
+  const free = state.buy && state.buy.free > 1 ? 'Первые ' + state.buy.free + ' урока — бесплатно' : 'Первый урок — бесплатно';
+  const courseCard = el('div', { class: 'card pcard' },
+    step(list.length, word, st === 'active' ? '' : 'lock'),
+    st === 'active' ? null : el('span', { class: 'chip ' + (st === 'guest' ? 'ok' : 'lock'), style: 'margin-left:6px' }, st === 'guest' ? '🎁 ' + free : '🔒 По приглашению'),
+    el('div', { class: 'pt' }, state.title || word),
+    el('div', { class: 'hint' }, lessonsWord + (state.expert && state.expert.name ? ' · ' + state.expert.name : '')),
+    st === 'active' && n ? el('div', { class: 'bar' }, el('i', { style: `width:${Math.round(done / n * 100)}%` })) : null,
+    st === 'active' && n ? el('div', { class: 'stats' }, `Пройдено уроков: ${done} из ${n}`) : null,
+    el('button', { class: 'btn', onclick: openCourse },
+      st === 'active' ? (done ? 'Продолжить' : 'Начать') + ' →' : st === 'guest' ? 'Начать бесплатно →' : 'Подробнее →'));
+
+  show(expertHead(),
+    el('div', { class: 'sub', style: 'margin:6px 0 2px' }, `Здравствуйте, ${state.name || 'гость'}!`),
+    el('h1', { class: 'vh' }, 'Мои программы'),
+    ...quizCards, courseCard,
+    state.chat_url && st === 'active' ? el('button', { class: 'btn secondary', onclick: () => openUrl(state.chat_url) }, '💬 Чат ' + W().gen) : null,
+    state.booking_url ? el('button', { class: 'btn secondary', onclick: openBooking }, '📅 Записаться на консультацию') : null,
+    mockBar());
+}
+const plural = (n, one, few, many) => { const a = n % 10, b = n % 100; return a === 1 && b !== 11 ? one : a >= 2 && a <= 4 && (b < 12 || b > 14) ? few : many; };
+
+function openCourse() {
+  if (state.status !== 'active' && state.status !== 'guest') return renderCourseNotInvited();
+  renderCourseHome();
+}
+
+/** Кнопка «← Все продукты» над экраном курса — только если есть витрина. */
+function toShowcase() {
+  if (!hasShowcase()) return null;
+  setBack(renderShowcase);
+  return el('button', { class: 'back', onclick: renderShowcase }, '← Все продукты');
+}
+
+/** Прямая ссылка t.me/бот?startapp=… (или ?open=… от кнопки бота «Открыть уроки»): quiz1 / quiz2 — сразу квиз, learn — курс,
+    другая метка (insta, stories…) — первый квиз с этой меткой (?src=). Один раз за сессию,
+    иначе «назад» из квиза снова отправит в квиз. */
+function routeStartParam() {
+  const sp = (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || params.get('open') || params.get('startapp') || '';
+  if (!sp || !hasShowcase()) return false;
+  try { if (sessionStorage.getItem('routed') === sp) return false; sessionStorage.setItem('routed', sp); } catch (e) { return false; }
+  if (sp === 'learn') { openCourse(); return true; }
+  const list = products();
+  const p = list.find(x => x.id === sp);
+  if (p) { openProduct(p); return true; }
+  if (/^[A-Za-z0-9_-]{1,40}$/.test(sp)) { openProduct(list[0], sp); return true; }
+  return false;
+}
+
+function renderCourseHome() {
+  setBack(null);
+  const n = state.lessons.length, done = lessonsDone();
+  const next = state.lessons.find(l => l.open && !l.done);
+  const progress = el('div', { class: 'card' },
+    el('h2', {}, `Здравствуйте, ${state.name || 'ученик'}!`),
+    n ? el('div', { class: 'bar' }, el('i', { style: `width:${Math.round(done / n * 100)}%` })) : null,
+    el('div', { class: 'stats' }, n ? `Пройдено уроков: ${done} из ${n}` : 'Уроки скоро появятся'),
+    next ? el('button', { class: 'btn', onclick: () => renderLesson(next.n) }, `${done ? 'Продолжить' : 'Начать'}: урок ${next.n}`) : null);
+
+  const lockText = (l) => l.lock === 'paid' ? 'В полном ' + W().prep
+    : l.lock === 'start' ? cap(W().nom) + ' начнётся ' + fmtDate(l.opens_at)
+    : l.lock === 'date' ? (l.opens_at ? 'Откроется ' + fmtDate(l.opens_at) : 'Дата ещё не назначена')
+    : 'Откроется после предыдущего урока';
+  const lessons = state.lessons.map(l => el('div', { class: 'card' },
+    el('button', { class: 'day', disabled: !l.open, onclick: () => renderLesson(l.n) },
+      el('span', { class: 'num' + (l.done ? ' done' : '') }, l.done ? '✓' : l.n),
+      el('span', { class: 'meta' },
+        el('div', { class: 't' }, l.title || `Урок ${l.n}`),
+        el('div', { class: 's' }, l.open
+          ? [l.video ? '🎬 видео' : null, (l.files || []).length || l.material ? '📎 материалы' : null, l.live ? '🔴 эфир' : null,
+             l.questions.length ? `заданий: ${l.questions.length}` : null].filter(Boolean).join(' · ') || 'Текст урока'
+          : lockText(l))),
+      el('span', { class: 'badge' + (l.done ? ' ok' : '') }, l.done ? '✓ Пройден' : l.open ? 'Открыт' : '🔒'))));
+
+  const startCard = state.stream_start && state.status === 'active' && !state.preview
+    ? el('div', { class: 'card soft' }, el('div', { style: 'font-weight:600' }, '📅 ' + cap(W().nom) + ' начнётся ' + fmtDate(state.stream_start)),
+        el('div', { class: 'hint' }, 'В этот день откроется первый урок.')) : null;
+  show(toShowcase(), previewBar(), expertHead(), buyCard(), startCard, finalCard(), reviewCard(), progress, ...lessons,
+    state.status === 'guest' ? joinBox() : null,
+    state.chat_url ? el('button', { class: 'btn secondary', onclick: () => openUrl(state.chat_url) }, '💬 Чат ' + W().gen) : null,
+    state.booking_url ? el('button', { class: 'btn secondary', onclick: openBooking }, '📅 Записаться на консультацию') : null,
+    mockBar());
+}
+
+/** Плашка эксперта: режим просмотра (все уроки открыты, ответы не сохраняются) + «Посмотреть финал». */
+function previewBar() {
+  if (!state.preview) return null;
+  return el('div', { class: 'card soft' },
+    el('div', { style: 'font-weight:600' }, '👁 Вы эксперт — так приложение видят ученики'),
+    el('div', { class: 'hint' }, 'Все уроки открыты, чтобы вы могли их посмотреть. Ваши ответы и «Сдать урок» в таблицу не записываются.'),
+    state.buy && state.buy.free ? el('div', { class: 'hint', style: 'margin-top:4px' }, 'Бесплатных уроков: ' + state.buy.free + ' — их видит любой, кто откроет бота.') : null,
+    el('button', { class: 'btn', onclick: () => renderEditorList() }, '✏️ Мои уроки — добавить и изменить'),
+    state.finished ? null : el('button', { class: 'btn secondary', onclick: () => {
+      state.finished = true; state.final = state.final_preview; renderCourseHome(); window.scrollTo(0, 0);
+    } }, '🎉 Посмотреть финал'));
+}
+
+/* ==================== КАБИНЕТ ЭКСПЕРТА: «Мои уроки» ====================
+   Только эксперт (режим просмотра). Урок: название, текст, видео (ссылка или через чат),
+   материалы (PDF/фото до 10 МБ из телефона, большие — через чат), тетрадь, разбор, эфир. */
+
+let adminData = null;
+
+async function renderEditorList(note) {
+  setBack(() => start());
+  show(el('div', { class: 'center' }, 'Загружаем уроки…'));
+  try { adminData = await call('lessons_admin'); }
+  catch (e) { return renderError(e, () => renderEditorList()); }
+  const list = adminData.lessons || [];
+  show(
+    el('button', { class: 'back', onclick: () => start() }, '← Мой ' + W().nom),
+    el('h1', {}, '✏️ Мои уроки'),
+    el('p', { class: 'sub' }, 'Ученики видят изменения сразу. Тексты можно править и в Google Таблице — лист «Уроки».'),
+    note ? el('div', { class: 'msg ok' }, note) : null,
+    ...list.map(l => el('div', { class: 'card' },
+      el('button', { class: 'day', onclick: () => renderEditor(l) },
+        el('span', { class: 'num' }, l.n),
+        el('span', { class: 'meta' },
+          el('div', { class: 't' }, l.title || 'Без названия'),
+          el('div', { class: 's' }, [l.video ? '🎬 видео' : null, (l.files || []).length ? '📎 файлов: ' + l.files.length : null,
+            l.questions.length ? 'вопросов: ' + l.questions.length : 'без заданий', l.debrief ? 'есть разбор' : 'нет разбора']
+            .filter(Boolean).join(' · '))),
+        el('span', { class: 'badge' }, 'Изменить')))),
+    el('button', { class: 'btn', onclick: () => renderEditor(null) }, '+ Новый урок'),
+    mockBar());
+}
+
+/** Перед чатом — что делать по шагам (эксперт забывает, если приложение сразу закрывается). */
+function renderViaChatHelp(lesson) {
+  setBack(() => renderEditor(lesson));
+  window.scrollTo(0, 0);
+  const step = (n, text) => el('div', { class: 'file' }, el('span', { class: 'num', style: 'flex:0 0 28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:var(--accent-text);font-weight:700' }, n), el('span', { class: 't' }, text));
+  show(
+    el('button', { class: 'back', onclick: () => renderEditor(lesson) }, '← Назад к уроку'),
+    el('h1', {}, '🎬 Видео к уроку ' + lesson.n),
+    el('div', { class: 'card' },
+      step(1, 'Нажмите «Перейти в чат» — откроется чат с ботом.'),
+      step(2, 'В чате нажмите скрепку 📎 → выберите видео или файл → «Отправить». Подписывать не нужно.'),
+      step(3, 'Бот ответит «✅ Файл прикреплён к уроку ' + lesson.n + '». Бывает, ответ приходит через пару минут — это нормально.'),
+      step(4, 'Вернитесь кнопкой «Открыть» → «✏️ Мои уроки» → урок ' + lesson.n + ': файл будет в списке.')),
+    el('div', { class: 'hint', style: 'margin:0 4px 8px' }, 'Следующие 30 минут всё, что вы отправите боту без подписи, прикрепится к этому уроку.'),
+    el('button', { class: 'btn', onclick: closeToChat }, '💬 Перейти в чат'),
+    mockBar());
+}
+
+function field(label, node, hint) {
+  return el('div', { class: 'q' }, el('label', {}, label), node, hint ? el('div', { class: 'hint', style: 'margin-top:4px' }, hint) : null);
+}
+
+function renderEditor(l) {
+  const lesson = l || { n: 0, title: '', text: '', video: '', material: '', live: '', debrief: '', opens: '', questions: [], files: [] };
+  setBack(() => renderEditorList());
+  window.scrollTo(0, 0);
+  const inp = (v, ph) => { const i = el('input', { placeholder: ph || '', maxlength: '1000' }); i.value = v || ''; return i; };
+  const area = (v, ph, rows) => { const t = el('textarea', { placeholder: ph || '', style: 'min-height:' + (rows || 96) + 'px' }); t.value = v || ''; return t; };
+
+  const title = inp(lesson.title, 'Например: Почему мы не высыпаемся');
+  const text = area(lesson.text, 'Что ученик прочитает в уроке', 160);
+  const video = inp(lesson.video, 'https://youtu.be/…');
+  const material = inp(lesson.material, 'https://drive.google.com/…');
+  const live = inp(lesson.live, '25.11 в 19:00 https://meet.google.com/…');
+  const debrief = area(lesson.debrief, 'Ваш разбор: что важно, частые ошибки, что дальше');
+  const opens = inp(lesson.opens, '01.12.2026');
+  const max = (adminData && adminData.max_questions) || 5;
+
+  const qBox = el('div', {});
+  const qInputs = [];
+  const addQ = (v) => {
+    if (qInputs.length >= max) return;
+    const q = inp(v, 'Вопрос ' + (qInputs.length + 1));
+    qInputs.push(q); qBox.append(el('div', { style: 'margin-bottom:6px' }, q));
+    addQBtn.style.display = qInputs.length >= max ? 'none' : '';
+  };
+  const addQBtn = el('button', { class: 'btn secondary', onclick: () => addQ('') }, '+ ещё вопрос');
+  (lesson.questions.length ? lesson.questions : ['']).forEach(addQ);
+
+  // Файлы урока
+  const filesBox = el('div', {});
+  const fileMsg = el('div', { class: 'msg' });
+  const drawFiles = () => {
+    filesBox.replaceChildren(...(lesson.files || []).map(f => el('div', { class: 'file' },
+      el('span', {}, FILE_ICON[f.type] || '📎'),
+      el('span', { class: 't' }, f.title || 'Файл', el('div', { class: 'hint', style: 'font-size:12px' }, f.protected ? '🔒 нельзя переслать' : 'можно сохранить')),
+      el('button', { class: 'btn secondary', onclick: async (ev) => {
+        if (!confirm('Убрать «' + (f.title || 'файл') + '» из урока?')) return;
+        ev.target.disabled = true;
+        try { await call('file_remove', { file: f.id }); lesson.files = lesson.files.filter(x => x !== f); drawFiles(); }
+        catch (e) { fileMsg.className = 'msg bad'; fileMsg.textContent = errText(e); ev.target.disabled = false; }
+      } }, '✕'))));
+  };
+  drawFiles();
+  const picker = el('input', { type: 'file', accept: 'application/pdf,image/jpeg,image/png,.pdf,.jpg,.jpeg,.png', style: 'display:none' });
+  picker.addEventListener('change', () => {
+    const file = picker.files && picker.files[0];
+    picker.value = '';
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { fileMsg.className = 'msg bad'; fileMsg.textContent = 'Файл больше 10 МБ — нажмите «🎬 Видео или большой файл — через чат».'; return; }
+    fileMsg.className = 'msg'; fileMsg.textContent = 'Загружаем «' + file.name + '»…';
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const b64 = String(reader.result || '').split(',')[1] || '';
+      try {
+        await call('file_upload', { lesson: lesson.n, name: file.name, mime: file.type || 'application/pdf', data: b64 });
+        const fresh = await call('lessons_admin');
+        const me = (fresh.lessons || []).find(x => x.n === lesson.n);
+        lesson.files = me ? me.files : lesson.files; drawFiles();
+        fileMsg.className = 'msg ok'; fileMsg.textContent = '✓ «' + file.name + '» прикреплён';
+      } catch (e) { fileMsg.className = 'msg bad'; fileMsg.textContent = errText(e); }
+    };
+    reader.onerror = () => { fileMsg.className = 'msg bad'; fileMsg.textContent = 'Не получилось прочитать файл.'; };
+    reader.readAsDataURL(file);
+  });
+  const viaChat = async () => {
+    fileMsg.className = 'msg'; fileMsg.textContent = 'Готовим чат…';
+    try { await call('file_await', { lesson: lesson.n }); fileMsg.textContent = ''; renderViaChatHelp(lesson); }
+    catch (e) { fileMsg.className = 'msg bad'; fileMsg.textContent = errText(e); }
+  };
+  const filesCard = () => lesson.n
+    ? el('div', { class: 'card' }, el('label', {}, '📎 Видео и файлы урока'), filesBox,
+        el('button', { class: 'btn secondary', onclick: () => picker.click() }, '📄 Добавить PDF или фото (до 10 МБ)'),
+        el('button', { class: 'btn secondary', onclick: viaChat }, '🎬 Видео или большой файл — через чат'),
+        el('div', { class: 'hint', style: 'margin-top:6px' }, 'Видео — через чат с ботом: нажмите кнопку выше, там будет подсказка по шагам.'),
+        picker, fileMsg)
+    : el('div', { class: 'card soft' }, el('div', { class: 'hint' }, '📎 Видео и файлы можно будет добавить после «Сохранить».'));
+
+  const msg = el('div', { class: 'msg' });
+  const save = el('button', { class: 'btn', onclick: async () => {
+    if (!title.value.trim()) { msg.className = 'msg bad'; msg.textContent = 'Напишите название урока.'; title.focus(); return; }
+    save.disabled = true; msg.className = 'msg'; msg.textContent = 'Сохраняем…';
+    try {
+      const r = await call('lesson_save', { n: lesson.n || null, title: title.value, text: text.value, video: video.value, material: material.value,
+        live: live.value, debrief: debrief.value, opens: opens.value, questions: qInputs.map(q => q.value) });
+      haptic('success');
+      const isNew = !lesson.n;
+      Object.assign(lesson, { n: r.n, title: title.value.trim(), text: text.value, video: video.value.trim(), material: material.value.trim(),
+        live: live.value.trim(), debrief: debrief.value, opens: opens.value.trim(), questions: qInputs.map(q => q.value.trim()).filter(Boolean) });
+      if (isNew) { renderEditor(lesson); return; }
+      msg.className = 'msg ok'; msg.textContent = '✓ Сохранено — ученики уже видят изменения';
+    } catch (e) { haptic('error'); msg.className = 'msg bad'; msg.textContent = errText(e); }
+    save.disabled = false;
+  } }, lesson.n ? 'Сохранить' : 'Сохранить урок');
+
+  const preview = lesson.n ? el('button', { class: 'btn secondary', onclick: async () => {
+    try { await reloadState(); renderLesson(lesson.n); } catch (e) { msg.className = 'msg bad'; msg.textContent = errText(e); }
+  } }, '👁 Посмотреть как ученик') : null;
+
+  show(
+    el('button', { class: 'back', onclick: () => renderEditorList() }, '← Мои уроки'),
+    el('h1', {}, lesson.n ? 'Урок ' + lesson.n : 'Новый урок'),
+    el('div', { class: 'card' },
+      field('Название', title),
+      field('Текст урока', text),
+      field('Видео — ссылка YouTube', video, 'Или загрузите видео через чат — ниже, в «Видео и файлы».'),
+      field('Материал — ссылка', material, 'Google Диск или любая ссылка. Необязательно.')),
+    filesCard(),
+    el('div', { class: 'card' }, el('label', {}, '✍️ Рабочая тетрадь'), qBox, addQBtn,
+      el('div', { class: 'hint', style: 'margin-top:6px' }, 'До ' + max + ' вопросов. Нет вопросов — ученик просто отметит урок пройденным.')),
+    el('div', { class: 'card' }, field('Разбор', debrief, 'Ученик увидит его сразу после «Сдать урок».')),
+    el('div', { class: 'card' },
+      field('Прямой эфир — по желанию', live, 'Дата, время и ссылка в одной строке. Пусто — эфира нет.'),
+      adminData && adminData.open_mode === 'dates' ? field('Когда открыть', opens, 'Уроки открываются по датам.') : null),
+    save, msg, preview, mockBar());
+}
+
+function videoBlock(url) {
+  if (!url) return null;
+  const id = youtubeId(url);
+  if (id) {
+    return el('div', {},
+      el('div', { class: 'video' }, el('iframe', {
+        src: `https://www.youtube-nocookie.com/embed/${id}?rel=0&playsinline=1`, title: 'Видео урока',
+        allow: 'accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen', allowfullscreen: true,
+        referrerpolicy: 'strict-origin-when-cross-origin' })),
+      el('button', { class: 'back', onclick: () => openUrl(url) }, 'Не играет? Открыть в YouTube'));
+  }
+  return el('button', { class: 'btn', onclick: () => openUrl(url) }, '▶ Смотреть видео');
+}
+
+const FILE_ICON = { video: '🎬', audio: '🎧', voice: '🎧', photo: '🖼', document: '📄', animation: '🎞', video_note: '🎬' };
+
+function materialsCard(l) {
+  const files = l.files || [];
+  if (!files.length && !l.material) return null;
+  // Куда ушёл файл и как вернуться: файл приходит в чат с ботом с подписью «Урок N · …»
+  // и кнопкой «← Вернуться к уроку N»; отсюда — кнопка «Перейти в чат» (закрывает приложение).
+  const sent = el('div', { class: 'hidden' },
+    el('div', { class: 'msg ok' }, '✓ Файл в чате с ботом. Под файлом — кнопка «Вернуться к уроку».'),
+    el('button', { class: 'btn', onclick: closeToChat }, '💬 Перейти в чат'));
+  const msg = el('div', { class: 'msg' });
+  const rows = files.map(f => {
+    const btn = el('button', { class: 'btn', onclick: async () => {
+      btn.disabled = true; msg.className = 'msg'; msg.textContent = 'Отправляем в чат…';
+      try {
+        await call('material', { lesson: l.n, file: f.id });
+        haptic('success'); msg.textContent = '';
+        sent.className = '';
+        btn.textContent = 'В чате ✓';
+      } catch (e) { haptic('error'); msg.className = 'msg bad'; msg.textContent = errText(e); btn.disabled = false; }
+    } }, '📩 Прислать в чат');
+    return el('div', { class: 'file' }, el('span', {}, FILE_ICON[f.type] || '📎'),
+      el('span', { class: 't' }, f.title || 'Файл', el('div', { class: 'hint', style: 'font-size:12px' },
+        f.protected ? '🔒 смотреть в чате с ботом, переслать нельзя' : 'можно сохранить себе')), btn);
+  });
+  return el('div', { class: 'card' }, el('label', {}, 'Материалы урока'),
+    files.length ? el('div', { class: 'hint', style: 'margin-bottom:6px' },
+      'Файлы приходят в чат с ботом — там их можно открыть в любой момент.') : null,
+    l.material ? el('button', { class: 'btn secondary', onclick: () => openUrl(l.material) }, '📄 Открыть материал') : null,
+    ...rows, files.length ? msg : null, files.length ? sent : null);
+}
+
+/** Закрыть приложение — ученик оказывается в чате с ботом, где лежит файл. */
+function closeToChat() {
+  if (tg && tg.close) tg.close();
+  else alert('Здесь приложение закроется, и откроется чат с ботом.');
+}
+
+/* Текст урока, разбора, вопроса → оформленный блок. Эксперт пишет как в заметках (правила — в промпте курса):
+   «Итог дня: …» — плашка; пустая строка + короткая строка без точки — заголовок раздела; «Шаг N. …» — шаг с номером;
+   «• …» — список; «Результат: …» — итог; «Если …», «Важно …» — подсказка; «✅ Заголовок: a · b · c» — чек-лист;
+   **так** — жирным; «Слово: текст» в начале строки — слово жирным. Только textContent — HTML из таблицы не вставляется. */
+function richInline(text) {
+  const f = document.createDocumentFragment();
+  String(text).split(/\*\*(.+?)\*\*/).forEach((part, j) => {
+    if (!part) return;
+    const into = j % 2 ? f.appendChild(el('strong')) : f;
+    part.split(/(«[^»\n]{1,60}»)/).forEach((p, k) => { if (p) into.appendChild(k % 2 ? el('strong', {}, p) : document.createTextNode(p)); });
+  });
+  return f;
+}
+function richText(text, cls) {
+  const box = el('div', { class: (cls || '') + ' rich' });
+  const lines = String(text || '').replace(/\r/g, '').split('\n').map(s => s.trim());
+  let sec = box, list = null;
+  const add = node => { list = null; sec.appendChild(node); };
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+  const newSec = (num, title) => {
+    sec = el('div', { class: 'sec' }); const t = el('div');
+    if (num) t.append(el('small', {}, 'Шаг ' + num));
+    t.append(el('h3', {}, richInline(title)));
+    sec.append(el('div', { class: 'sec-h' }, num ? el('span', { class: 'num' }, num) : null, t)); box.append(sec); list = null;
+  };
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]; let m;
+    if (!line) { list = null; continue; }
+    if ((m = /^Шаг (\d+)\.\s*(.+)$/.exec(line))) { newSec(m[1], m[2]); continue; }
+    const afterBlank = i > 0 && !lines[i - 1];
+    if (afterBlank && line.length <= 40 && lines[i + 1] && !/[.:!?…»)]$/.test(line) && !/^[•✅]/.test(line)) { newSec(null, line.replace(/^\*\*(.+)\*\*$/, '$1')); continue; }
+    if ((m = /^Итог дня:\s*(.+)$/.exec(line))) { add(el('div', { class: 'goal' }, el('span', {}, '🎯'), el('div', {}, el('small', {}, 'Итог дня'), richInline(cap(m[1]))))); continue; }
+    if ((m = /^✅\s*(.+?):\s*(.+)$/.exec(line))) {
+      const ul = el('ul'); m[2].split(/\s+·\s+/).forEach(s => ul.append(el('li', {}, el('div', {}, richInline(cap(s.replace(/\.$/, '')))))));
+      sec = box; add(el('div', { class: 'check' }, el('h4', {}, '✅ ' + m[1]), ul)); continue;
+    }
+    if ((m = /^•\s*(.+)$/.exec(line))) { if (!list) { list = el('ul'); sec.append(list); } list.append(el('li', {}, richInline(m[1]))); continue; }
+    if ((m = /^Результат:\s*(.+)$/.exec(line))) { add(el('div', { class: 'note res' }, el('span', { class: 'ic' }, '✓'), el('div', {}, el('strong', {}, 'Результат: '), richInline(m[1])))); continue; }
+    if (/^(Если|Важно|Внимание)[\s,]/.test(line)) { add(el('div', { class: 'note tip' }, el('span', {}, '💡'), el('div', {}, richInline(line)))); continue; }
+    const p = el('p'); m = /^([А-ЯЁA-Z][^:.«»*\n]{0,24}):\s+(.+)$/.exec(line);
+    if (m) p.append(el('strong', {}, m[1] + ': '), richInline(m[2])); else p.append(richInline(line));
+    add(p);
+  }
+  return box;
+}
+/* Вопрос тетради: переносы строк сохраняются, **так** — жирным. */
+function richQuestion(text) { const d = el('div', { class: 'qt' }); d.append(richInline(text)); return d; }
+
+/* «Следующий урок» — две строки: сверху «Следующий урок · День 1 →», снизу название урока */
+function nextButton(l) {
+  const t = String(l.title || '').trim();
+  const m = /^((?:День|Вечер|Урок|Неделя|Шаг|Модуль)\s*\d+)[.:]?\s*(.*)$/i.exec(t);
+  const head = 'Следующий урок' + (m ? ' · ' + m[1] : '') + ' ';
+  const name = m ? m[2] : (t || 'Урок ' + l.n);
+  return el('button', { class: 'btn next', title: t, onclick: () => renderLesson(l.n) },
+    el('span', { class: 'nh' }, head, el('i', {}, '→')), name ? el('span', { class: 'nt' }, name) : null);
+}
+
+function renderLesson(n, toDebrief) {
+  const i = state.lessons.findIndex(x => x.n === n);
+  const l = state.lessons[i];
+  if (!l || !l.open) return renderCourseHome();
+  setBack(renderCourseHome);
+  window.scrollTo(0, 0);
+
+  const live = l.live ? el('div', { class: 'card live' },
+    el('div', { style: 'font-weight:600' }, '🔴 Прямой эфир' + (l.live_when ? ' · ' + l.live_when : '')),
+    l.live_when ? null : el('div', { class: 'hint' }, 'Время эфира эксперт сообщит в чате ' + W().gen + ' или в боте.'),
+    el('button', { class: 'btn', onclick: () => openUrl(l.live) }, 'Перейти на эфир')) : null;
+
+  // Рабочая тетрадь: ответ сохраняется, когда ученик уходит из поля; «Сдать урок» досохраняет и сдаёт.
+  const msg = el('div', { class: 'msg' });
+  const tas = l.questions.map(q => {
+    const ta = el('textarea', { maxlength: '4000', placeholder: 'Ваш ответ', disabled: l.done });
+    ta.value = q.answer || '';
+    const st = el('div', { class: 'msg' + (q.answer ? ' ok' : '') }, q.answer && !l.done ? 'Сохранено' : '');
+    ta.addEventListener('blur', () => { if (!l.done) saveAnswer(l, q, ta, st).catch(() => {}); });
+    return { q, ta, st, box: el('div', { class: 'q' }, richQuestion(q.text), ta, st) };
+  });
+
+  let workbook = null;
+  if (l.questions.length) {
+    workbook = el('div', { class: 'card' }, el('label', {}, '✍️ Рабочая тетрадь'), ...tas.map(t => t.box));
+  }
+
+  let action;
+  if (l.done) {
+    action = el('div', { class: 'card' },
+      el('div', { class: 'msg ok', style: 'margin-top:0;font-weight:600' }, '✓ Урок пройден'),
+      l.debrief ? el('div', { class: 'fb rich', id: 'debrief' }, el('div', { class: 'who' }, 'Разбор урока' + (state.expert && state.expert.name ? ' · ' + state.expert.name : '')), richText(l.debrief)) : null,
+      state.chat_url ? el('button', { class: 'btn chat', onclick: () => openUrl(state.chat_url) }, `💬 Обсудить урок ${l.n} в чате`) : null);
+  } else {
+    const btn = el('button', { class: 'btn', onclick: async () => {
+      if (tas.some(t => !t.ta.value.trim())) { msg.className = 'msg bad'; msg.textContent = 'Ответьте на все задания тетради.'; return; }
+      btn.disabled = true; msg.className = 'msg'; msg.textContent = 'Сдаём урок…';
+      try {
+        for (const t of tas) await saveAnswer(l, t.q, t.ta, t.st);
+        const r = await call('submit', { lesson: l.n });
+        haptic('success');
+        if (state.preview) {
+          // Режим просмотра: скрипт ничего не записал — отмечаем урок пройденным только на экране.
+          l.done = true; l.debrief = r && r.debrief || l.debrief;
+          if (state.lessons.every(x => x.done)) { state.finished = true; state.final = state.final_preview; return renderCourseHome(); }
+          return renderLesson(n, true);
+        }
+        await reloadState();
+        const fresh = state.lessons.find(x => x.n === n);
+        if (state.finished) return renderCourseHome();
+        renderLesson(fresh ? fresh.n : n, true);
+      } catch (e) { haptic('error'); msg.className = 'msg bad'; msg.textContent = errText(e); btn.disabled = false; }
+    } }, l.questions.length ? 'Сдать урок' : 'Отметить урок пройденным');
+    action = el('div', {}, btn, msg);
+  }
+
+  const afterFree = l.done && state.status === 'guest' ? buyCard(true) : null;
+  const nextL = state.lessons[i + 1];
+  const next = l.done && nextL && nextL.open
+    ? nextButton(nextL) : null;
+
+  show(el('button', { class: 'back', onclick: renderCourseHome }, '← Все уроки'),
+    el('div', { class: 'card' },
+      el('div', { class: 'hint' }, `Урок ${i + 1} из ${state.lessons.length}`),
+      el('h2', {}, l.title || `Урок ${l.n}`),
+      videoBlock(l.video),
+      l.text ? richText(l.text) : null),
+    materialsCard(l), live, workbook, action, afterFree, next, mockBar());
+  // После «Сдать урок» — сразу к разбору, а не наверх страницы
+  if (toDebrief) { const d = document.getElementById('debrief'); if (d) d.scrollIntoView({ block: 'start' }); }
+}
+
+/** Сохранить ответ, если он изменился. */
+async function saveAnswer(l, q, ta, st) {
+  const text = ta.value.trim();
+  if (!text || text === (q.answer || '')) return;
+  st.className = 'msg'; st.textContent = 'Сохраняем…';
+  try {
+    await call('answer', { lesson: l.n, question_id: q.id, text });
+    q.answer = text; st.className = 'msg ok'; st.textContent = 'Сохранено';
+  } catch (e) { st.className = 'msg bad'; st.textContent = errText(e); throw e; }
+}
+
+async function reloadState() {
+  state = await call('me');
+  state.lessons = (state.lessons || []).map(l => ({ ...l, questions: l.questions || [], files: l.files || [] }));
+}
+
+async function start() {
+  show(el('div', { class: 'center' }, 'Загружаем…'));
+  if (!USE_MOCK && !SCRIPT_URL) return renderError({ message: 'Приложение не подключено — откройте его из бота эксперта.' });
+  if (!USE_MOCK && !initData) return renderError({ message: 'Откройте приложение из бота в Telegram.' });
+  try {
+    state = await call('me');
+    if (state.format === 'course') {
+      state.lessons = (state.lessons || []).map(l => ({ ...l, questions: l.questions || [], files: l.files || [] }));
+      if (state.title) document.title = state.title;
+      applyBrand(state.expert);
+      // ?lesson=N — пришли кнопкой «← Вернуться к уроку N» из чата: сразу этот урок (если открыт).
+      const want = Number(params.get('lesson'));
+      const target = want ? state.lessons.find(x => x.n === want && x.open) : null;
+      if (target) return renderLesson(target.n);
+      if (routeStartParam()) return;
+      if (hasShowcase() && !state.preview) return renderShowcase();
+      if (state.status !== 'active' && state.status !== 'guest') return renderCourseNotInvited();
+      return renderCourseHome();
+    }
+    state.days = (state.days || []).map(d => ({ ...d, questions: d.questions || [] }));
+    if (state.status !== 'active') return renderNotInvited();
+    renderHome();
+  } catch (e) { renderError(e, start); }
+}
+start();
+</script>
+</body>
+</html>
