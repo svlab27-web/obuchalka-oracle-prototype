@@ -423,9 +423,9 @@ function mockCourse(action, f) {
       expert: MOCK_C.expert, chat_url: MOCK_C.chat_url, booking_url: '', open_mode: preview ? 'all' : 'seq', lessons, finished,
       final: finished ? MOCK_C.final : undefined, reviewed: !!MOCK_C.reviewed, preview, buy, final_preview: preview ? MOCK_C.final : undefined,
       products: params.has('showcase') ? [
-        { id: 'quiz1', title: 'Тест: почему после 40 тело перестало слушаться', url: params.has('local') ? location.origin + '/q1.html' : 'https://svlab27-web.github.io/kviz-svetlana/' },
+        { id: 'quiz1', title: 'Тест: почему после 40 тело перестало слушаться', url: params.has('local') ? new URL('q1.html', location.href).href : 'https://svlab27-web.github.io/kviz-svetlana/' },
         params.has('paid') ? { id: 'quiz2', title: 'Диагностика сна', access: 'locked', price: '4 900 ₸', pay_url: 'https://kaspi.kz/' }
-          : { id: 'quiz2', title: 'Диагностика сна', url: params.has('local') ? location.origin + '/q2.html' : 'https://svlab27-web.github.io/kviz-svetlana/' }
+          : { id: 'quiz2', title: 'Диагностика сна', url: params.has('local') ? new URL('q2.html', location.href).href : 'https://svlab27-web.github.io/kviz-svetlana/' }
       ] : undefined };
   }
   if (preview && action === 'lessons_admin') {
