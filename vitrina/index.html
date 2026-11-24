@@ -423,9 +423,9 @@ function mockCourse(action, f) {
       expert: MOCK_C.expert, chat_url: MOCK_C.chat_url, booking_url: '', open_mode: preview ? 'all' : 'seq', lessons, finished,
       final: finished ? MOCK_C.final : undefined, reviewed: !!MOCK_C.reviewed, preview, buy, final_preview: preview ? MOCK_C.final : undefined,
       products: params.has('showcase') ? [
-        { id: 'quiz1', title: 'Тест: почему после 40 тело перестало слушаться', url: 'https://svlab27-web.github.io/kviz-svetlana/' },
+        { id: 'quiz1', title: 'Тест: почему после 40 тело перестало слушаться', url: params.has('local') ? location.origin + '/q1.html' : 'https://svlab27-web.github.io/kviz-svetlana/' },
         params.has('paid') ? { id: 'quiz2', title: 'Диагностика сна', access: 'locked', price: '4 900 ₸', pay_url: 'https://kaspi.kz/' }
-          : { id: 'quiz2', title: 'Диагностика сна', url: 'https://svlab27-web.github.io/kviz-svetlana/' }
+          : { id: 'quiz2', title: 'Диагностика сна', url: params.has('local') ? location.origin + '/q2.html' : 'https://svlab27-web.github.io/kviz-svetlana/' }
       ] : undefined };
   }
   if (preview && action === 'lessons_admin') {
@@ -575,7 +575,7 @@ function renderCourseNotInvited() {
 const PRODUCT_ID = /^[a-z0-9_]{1,30}$/;
 function products() {
   const list = state && Array.isArray(state.products) ? state.products : [];
-  const https = (u) => /^https:\/\/[^\s"'<>]+$/i.test(u || '');
+  const https = (u) => (USE_MOCK ? /^https?:\/\/[^\s"'<>]+$/i : /^https:\/\/[^\s"'<>]+$/i).test(u || '');
   return list.filter(p => p && PRODUCT_ID.test(p.id || '') && (p.access === 'locked' || p.access === 'pending' || https(p.url))).slice(0, 6);
 }
 const hasShowcase = () => products().length > 0;
@@ -606,8 +606,22 @@ function openProduct(p, src) {
   try { u = new URL(p.url); } catch (e) { return; }
   u.searchParams.set('from', 'app');
   if (src) u.searchParams.set('src', src);
+  // Внутри приложения квиз не видит Telegram — передаём имя и ник, чтобы заявка заполнилась сама
+  const tu = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
+  if (tu && tu.id) {
+    u.searchParams.set('tg_id', String(tu.id));
+    u.searchParams.set('tg_name', [tu.first_name, tu.last_name].filter(Boolean).join(' '));
+    if (tu.username) u.searchParams.set('tg_user', tu.username);
+  }
   renderProductFrame(p, u.toString());
 }
+
+let activeFrame = null;
+window.addEventListener('message', (e) => {
+  if (!activeFrame || !document.body.contains(document.querySelector('.pframe'))) return;
+  if (e.source !== activeFrame.win() || !e.data || e.data.nvl !== 'next') return;
+  activeFrame.next();
+});
 
 /** Квиз открывается внутри приложения: сверху «← Мои программы», снизу — следующий продукт.
     Так из квиза всегда можно уйти, и сам квиз переделывать не нужно. */
@@ -626,6 +640,8 @@ function renderProductFrame(p, url) {
     ? el('button', { class: 'btn', onclick: renderShowcase }, 'Дальше: ' + ((PRODUCT_KIND[nextLocked.id] || {}).kind || 'Квиз') + ' — ' + nextLocked.title + ' →')
     : el('button', { class: 'btn', onclick: openCourse }, 'Дальше: ' + courseWord + ' — ' + (state.title || courseWord) + ' →');
   const frame = el('iframe', { src: url, class: 'pframe', title: p.title, allow: 'clipboard-write; web-share' });
+  // Кнопка «Следующий шаг» в конце квиза присылает { nvl: 'next' } — делаем то же, что нижняя кнопка «Дальше»
+  activeFrame = { win: () => frame.contentWindow, next: () => nextBtn.click() };
   show(el('div', { class: 'pwrap' },
     el('div', { class: 'ptop' },
       el('button', { class: 'back', onclick: renderShowcase }, '← Мои программы'),
