@@ -612,10 +612,10 @@ function renderShowcase() {
     st === 'active' && n ? el('div', { class: 'bar' }, el('i', { style: `width:${Math.round(done / n * 100)}%` })) : null,
     st === 'active' && n ? el('div', { class: 'stats' }, `Пройдено уроков: ${done} из ${n}`) : null,
     el('button', { class: 'btn', onclick: openCourse },
-      st === 'active' ? (done ? 'Продолжить' : 'Начать') + ' →' : st === 'guest' ? 'Начать бесплатно →' : 'Подробнее →'));
+      state.preview ? 'Открыть уроки (как видит ученик) →' : st === 'active' ? (done ? 'Продолжить' : 'Начать') + ' →' : st === 'guest' ? 'Начать бесплатно →' : 'Подробнее →'));
 
-  show(expertHead(),
-    el('div', { class: 'sub', style: 'margin:6px 0 2px' }, `Здравствуйте, ${state.name || 'гость'}!`),
+  show(previewBar(), expertHead(),
+    el('div', { class: 'sub', style: 'margin:6px 0 2px' }, state.preview ? 'Ниже — так ваши продукты видят клиенты' : `Здравствуйте, ${state.name || 'гость'}!`),
     el('h1', { class: 'vh' }, 'Мои программы'),
     ...quizCards, courseCard,
     state.chat_url && st === 'active' ? el('button', { class: 'btn secondary', onclick: () => openUrl(state.chat_url) }, '💬 Чат ' + W().gen) : null,
