@@ -1079,7 +1079,7 @@ async function start() {
       const target = want ? state.lessons.find(x => x.n === want && x.open) : null;
       if (target) return renderLesson(target.n);
       if (routeStartParam()) return;
-      if (hasShowcase() && !state.preview) return renderShowcase();
+      if (hasShowcase()) return renderShowcase(); // эксперт тоже видит витрину — как клиент; курс открывается в режиме просмотра
       if (state.status !== 'active' && state.status !== 'guest') return renderCourseNotInvited();
       return renderCourseHome();
     }
